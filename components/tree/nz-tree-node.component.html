@@ -2,6 +2,7 @@
   #dragElement
   role="treeitem"
   [ngClass]="nzNodeClass"
+  *ngIf="!nzSearchValue || nzTreeNode.isParentMatched || nzTreeNode.isMatched"
   [class.ant-tree-treenode-switcher-open]="isSwitcherOpen"
   [class.ant-tree-treenode-switcher-close]="isSwitcherClose"
   [class.ant-tree-treenode-checkbox-checked]="nzTreeNode.isChecked"
@@ -11,6 +12,7 @@
   <ng-container *ngIf="nzShowExpand">
     <span
       [ngClass]="nzNodeSwitcherClass"
+      [style.visibility]="nzTreeNode.children?.length ? 'visible' : 'hidden'"
       [class.ant-tree-switcher_open]="isSwitcherOpen"
       [class.ant-tree-switcher_close]="isSwitcherClose"
       (click)="_clickExpand($event)">

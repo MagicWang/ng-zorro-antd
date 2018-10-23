@@ -35,6 +35,7 @@ export class NzTreeNode {
   isSelected: boolean;
   isLoading: boolean;
   isMatched: boolean;
+  isParentMatched: boolean;
 
   constructor(option: NzTreeNodeOptions, parent: NzTreeNode = null) {
     this.title = option.title || '---';
@@ -54,6 +55,7 @@ export class NzTreeNode {
     this.isSelected = (!option.disabled && option.selected) || false;
     this.isLoading = false;
     this.isMatched = false;
+    this.isParentMatched = false;
 
     /**
      * parent's checked status will affect children while initializing

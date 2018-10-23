@@ -28,7 +28,7 @@
     "integration-cli": "npm run generate && cd integration/angular-cli && npm run integration",
     "integration-webpack": "npm run generate && cd integration/webpack && npm run integration",
     "integration-rollup": "npm run generate && cd integration/rollup && npm run integration",
-    "postgenerate": "node ./scripts/build/generate-less.js && cp README.md publish/README.md && npm run migration-styles && npm run schematic:generate",
+    "postgenerate": "node ./scripts/build/generate-less.js && npm run migration-styles",
     "generate": "ng build ng-zorro-antd-lib",
     "pre-release": "npm run site:init && bash ./scripts/build/replace-publish.sh && npm run generate && node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod && npm run helper"
   },

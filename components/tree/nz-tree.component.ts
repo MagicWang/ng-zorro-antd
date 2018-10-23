@@ -232,7 +232,7 @@ export class NzTreeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setClassMap();
     this.nzDefaultSubscription = this.nzDefaultSubject.subscribe((data: { type: string, keys: string[] }) => {
-      if (data.keys.length === 0) {
+      if (!data.keys || data.keys.length === 0) {
         return;
       }
       switch (data.type) {

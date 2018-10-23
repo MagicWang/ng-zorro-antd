@@ -344,6 +344,7 @@ export class NzTreeService {
       if (p.getParentNode()) {
         p.getParentNode().setExpanded(true);
         this.setExpandedNodeList(p.getParentNode());
+        p.getParentNode().isParentMatched = true;
         expandParent(p.getParentNode());
       }
     };
@@ -356,6 +357,7 @@ export class NzTreeService {
       } else {
         n.setExpanded(false);
         this.setExpandedNodeList(n);
+        n.isParentMatched = false;
       }
       n.children.forEach(g => {
         searchChild(g);
