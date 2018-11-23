@@ -18,7 +18,7 @@ import { debounceTime, distinctUntilChanged, map, mapTo, takeUntil } from 'rxjs/
 
 import { dropDownAnimation } from '../core/animation/dropdown-animations';
 import { DEFAULT_DROPDOWN_POSITIONS, POSITION_MAP } from '../core/overlay/overlay-position-map';
-import { toBoolean } from '../core/util/convert';
+import { toBoolean, InputBoolean } from '../core/util/convert';
 import { NzMenuDirective } from '../menu/nz-menu.directive';
 
 import { NzDropDownDirective } from './nz-dropdown.directive';
@@ -64,6 +64,7 @@ export class NzDropDownComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() nzTrigger: 'click' | 'hover' = 'hover';
   @Output() nzVisibleChange: EventEmitter<boolean> = new EventEmitter();
   @ViewChild(CdkConnectedOverlay) cdkOverlay: CdkConnectedOverlay;
+  @Input() @InputBoolean() nzIframe: boolean = true;
 
   @Input()
   set nzClickHide(value: boolean) {

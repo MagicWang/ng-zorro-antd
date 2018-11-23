@@ -360,10 +360,10 @@ export class NzTreeNodeComponent implements OnInit, OnChanges {
     e.stopPropagation();
     this.ngZone.run(() => {
       // if user do not custom beforeDrop
-      if (!this.nzBeforeDrop) {
+      // if (!this.nzBeforeDrop) {
         this.nzTreeService.setSelectedNode(null);
         this.nzDragEnd.emit(this.nzTreeService.formatEvent('dragend', this.nzTreeNode, e));
-      }
+      // }
     });
   }
 

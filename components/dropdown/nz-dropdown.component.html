@@ -15,6 +15,7 @@
     (mouseenter)="onMouseEnterEvent()"
     (mouseleave)="onMouseLeaveEvent()"
     [style.minWidth.px]="triggerWidth">
+    <iframe *ngIf="nzIframe" class="ant-dropdown-iframe" frameBorder="0" scrolling="no"></iframe>
     <div [class.ant-table-filter-dropdown]="hasFilterButton">
       <ng-content select="[nz-menu]"></ng-content>
       <ng-content select=".ant-table-filter-dropdown-btns"></ng-content>

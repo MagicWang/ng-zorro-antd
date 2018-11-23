@@ -70,7 +70,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   @Input() nzStyle: object;
   @Input() nzIconType: string = 'question-circle'; // Confirm Modal ONLY
   @Input() nzTitle: string | TemplateRef<{}>;
-  @Input() @InputBoolean() nzIframe: boolean = false;
+  @Input() @InputBoolean() nzIframe: boolean = true;
   @Input() @InputBoolean() nzClosable: boolean = true;
   @Input() @InputBoolean() nzMask: boolean = true;
   @Input() @InputBoolean() nzMaskClosable: boolean = true;
@@ -454,8 +454,10 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
   private savePreviouslyFocusedElement(): void {
     if (this.document) {
-      this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
-      this.previouslyFocusedElement.blur();
+      this.previouslyFocusedElement = this.document.activeElement;
+      if (this.previouslyFocusedElement instanceof HTMLElement) {// 解决IE下当前元素是SVGSVGElement报错问题
+        this.previouslyFocusedElement.blur();
+      }
     }
   }
 
@@ -468,7 +470,9 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
   private restoreFocus(): void {
     if (this.previouslyFocusedElement) {
-      this.previouslyFocusedElement.focus();
+      if (this.previouslyFocusedElement instanceof HTMLElement) {
+        this.previouslyFocusedElement.focus();
+      }
     }
     if (this.focusTrap) {
       this.focusTrap.destroy();
