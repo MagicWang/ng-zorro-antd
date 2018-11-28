@@ -27,16 +27,24 @@ We are still adding two-tone icons right now, syncing to [antd](https://ant.desi
 | `[type]` | Type of the ant design icon | string | - |
 | `[theme]` | Type of the ant design icon | `fill 丨 outline 丨 twotone` | `outline` |
 | `[spin]` | Rotate icon with animation | `boolean` | `false` |
-| `[twoToneColor]` |Only support the two-tone icon. Specific the primary color. | `string (hex color)` | - |
+| `[twoToneColor]` | Only support the two-tone icon. Specific the primary color. | `string (hex color)` | - |
 | `[iconfont]` | Type of the icon from iconfont | string | - |
 
 ### NzIconService
 
-| Methods | Description | Parameters |
+| Methods/Properties | Description | Parameters |
 | -------- | ----------- | ---- |
+| `twoToneColor` | To set the default primary color of twotone icons, use Ant Design's official blue by default | `TwoToneColorPaletteSetter` |
 | `addIcon()` | To import icons statically | `IconDefinition` |
 | `fetchFromIconfont()` | To get icon assets from fonticon | `NzIconfontOption` |
 | `changeAssetsSource()` |  To change the location of your icon assets, so that you can deploy these icons wherever you want | `string` |
+
+### InjectionToken
+
+| Token | Description | Parameters |
+| ----- | --- | ---- |
+| `NZ_ICONS` | To import icons statically | `IconDefinition[]`, `useValue` |
+| `NZ_ICON_DEFAULT_TWOTONE_COLOR` | To set the default primary color of twotone icons, use Ant Design's official blue by default | `string (hex color)`, `useValue` |
 
 ### SVG icons
 
@@ -65,21 +73,43 @@ All the icons will be rendered to `<svg>`, and styles and classes applied to `<i
 
 As for icons provided by Ant Design, there are two ways of importing them into your project.
 
-Static loading. By registering icons to `NzIconService` you load icons statically. The icons would be compiled into your bundles. Do it in constructors or `AppInitService` (recommended).
+Static loading. By registering icons to `AppModule` you load icons statically.
 
 ```ts
-import { ApartmentOutline } from '@ant-design/icons-angular/icons';
-import { NzIconService } from 'ng-zorro-antd';
+import { IconDefinition } from '@ant-design/icons-angular';
+import { NgZorroAntdModule, NZ_ICON_DEFAULT_TWOTONE_COLOR, NZ_ICONS } from 'ng-zorro-antd';
 
-export class AppComponent implements OnInit, AfterViewInit {
-  constructor(private iconService: NzIconService) {
-    // Import what you need.
-    this.iconService.addIcon(ApartmentOutline);
-  }
+// Import what you need. RECOMMENDED. ✔️
+import { AccountBookFill, AlertFill, AlertOutline } from '@ant-design/icons-angular/icons';
+
+const icons: IconDefinition[] = [ AccountBookFill, AlertOutline, AlertFill ];
+
+// Import all. NOT RECOMMENDED. ❌
+// import * as AllIcons from '@ant-design/icons-angular/icons';
+
+// const antDesignIcons = AllIcons as {
+//   [key: string]: IconDefinition;
+// };
+// const icons: IconDefinition[] = Object.keys(antDesignIcons).map(key => antDesignIcons[key])
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports     : [
+    NgZorroAntdModule,
+  ],
+  providers   : [
+    { provide: NZ_ICON_DEFAULT_TWOTONE_COLOR, useValue: '#00ff00' }, // If not provided, Ant Design's official blue would be used
+    { provide: NZ_ICONS, useValue: icons }
+  ],
+  bootstrap   : [ AppComponent ]
+})
+export class AppModule {
 }
 ```
 
-Static loading would increase your bundle's size so we recommend use dynamic importing as much as you can. You can track this [issue](https://github.com/ant-design/ant-design/issues/12011) of Ant Design for more details.
+Actually this calls `addIcon` of `NzIconService`. Icons imported would be bundled into your `.js` files. Static loading would increase your bundle's size so we recommend use dynamic importing as much as you can. You can track this [issue](https://github.com/ant-design/ant-design/issues/12011) of Ant Design for more details.
 
 > Icons used by `NG-ZORRO` itself are imported statically to increase loading speed. However, icons demonstrated on the official website are loaded dynamically.
 
@@ -101,11 +131,11 @@ We provide a schematic to fix this. Just simply run `ng g ng-zorro-antd:fix-icon
 
 You can call `changeAssetsSource()` of `NzIconService` to change the location of your icon assets, so that you can deploy these icon assets to cdn. The parameter you passed would be add in front of `assets/`.
 
-Let's assume that you deploy static assets under `https://mycdn.alibaba-inc.com/assets`. You can call `changeAssetsSource('https://mycdn.alibaba-inc.com/')` to tell NG-ZORRO that all your resources are located there.
+Let's assume that you deploy static assets under `https://mycdn.somecdn.com/icons/assets`. You can call `changeAssetsSource('https://mycdn.somecdn.com/icons')` to tell NG-ZORRO that all your resources are located there.
 
 Please call this in component's constructor or `AppInitService`.
 
-### Set TwoTone Color
+### Set Default TwoTone Color
 
 When using the two-tone icons, you can change the property of `NzIconService` to specify the primary color: `this.iconService.twoToneColor = { primaryColor: '#1890ff' }`.
 
@@ -136,3 +166,34 @@ The following option are available:
 The property scriptUrl should be set to import the svg sprite symbols.
 
 See [iconfont.cn](http://iconfont.cn/help/detail?spm=a313x.7781069.1998910419.15&helptype=code) documents to learn about how to generate scriptUrl.
+
+## FAQ
+
+### All my icons are gone!
+
+Have you read the docs above?
+
+### There are two similar icons in a `<i></i>` tag. What happened?
+
+In older versions of NG-ZORRO, there was a font file which would use `:before` to insert a icon according to a `i` tag's `className`. So if you have two icons, try to remove `node_modules` and reinstall. If the problem is still there, search `@icon-url` and remove that line.
+
+### I want to import all icons statically. What should I do?
+
+Actually we demonstrate it here <a href="/components/icon/en#static-loading-and-dynamic-loading">Static loading and dynamic loading</a>:
+
+```ts
+// import * as AllIcons from '@ant-design/icons-angular/icons';
+
+// const antDesignIcons = AllIcons as {
+//   [key: string]: IconDefinition;
+// };
+// const icons: IconDefinition[] = Object.keys(antDesignIcons).map(key => antDesignIcons[key])
+```
+
+### Does dynamic loading affect web pages' performance?
+
+We used several methods to reduce requests, like static cache, dynamic cache and reusable request. It's basically not noticeable for visitors that icons are loaded asynchronously assuming web connections are fairly good.
+
+### How do I know a icon's corresponding module to import?
+
+Capital camel-case `type & theme`, i.e. `alibaba` => `AlibabaOutline`.

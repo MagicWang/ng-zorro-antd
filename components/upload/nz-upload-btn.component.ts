@@ -1,3 +1,4 @@
+import { ENTER } from '@angular/cdk/keycodes';
 import { HttpClient, HttpEvent, HttpEventType, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import {
   ChangeDetectorRef,
@@ -9,8 +10,6 @@ import {
   OnDestroy,
   OnInit,
   Optional,
-  SimpleChange,
-  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
@@ -54,7 +53,7 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     if (this.options.disabled) {
       return;
     }
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.keyCode === ENTER) {
       this.onClick();
     }
   }
@@ -179,10 +178,10 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     const { uid } = file;
     let { data, headers } = opt;
     if (typeof data === 'function') {
-      data = data(file);
+      data = (data as (file: UploadFile) => {})(file);
     }
     if (typeof headers === 'function') {
-      headers = headers(file);
+      headers = (headers as (file: UploadFile) => {})(file);
     }
     const args: UploadXHRArgs = {
       action         : opt.action,
@@ -195,15 +194,19 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
         opt.onProgress(e, file);
       } : null,
       onSuccess      : (ret, xhr) => {
-        delete this.reqs[ uid ];
+        this.clean(uid);
         opt.onSuccess(ret, file, xhr);
       },
       onError        : (xhr) => {
-        delete this.reqs[ uid ];
+        this.clean(uid);
         opt.onError(xhr, file);
       }
     };
-    this.reqs[ uid ] = (opt.customRequest || this.xhr).call(this, args);
+    const req$ = (opt.customRequest || this.xhr).call(this, args);
+    if (!(req$ instanceof Subscription)) {
+      console.warn(`Must return Subscription type in '[nzCustomRequest]' property`);
+    }
+    this.reqs[ uid ] = req$;
     opt.onStart(file);
   }
 
@@ -245,18 +248,19 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  private clean(uid: string): void {
+    const req$ = this.reqs[ uid ];
+    if (req$ instanceof Subscription) {
+      req$.unsubscribe();
+    }
+    delete this.reqs[ uid ];
+  }
+
   abort(file?: UploadFile): void {
     if (file) {
-      const uid = file && file.uid;
-      if (this.reqs[ uid ]) {
-        this.reqs[ uid ].unsubscribe();
-        delete this.reqs[ uid ];
-      }
+      this.clean(file && file.uid);
     } else {
-      Object.keys(this.reqs).forEach((uid) => {
-        this.reqs[ uid ].unsubscribe();
-        delete this.reqs[ uid ];
-      });
+      Object.keys(this.reqs).forEach((uid) => this.clean(uid));
     }
   }
 
@@ -285,7 +289,7 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     this.setClassMap();
   }
 
-  ngOnChanges(changes: { [P in keyof this]?: SimpleChange } & SimpleChanges): void {
+  ngOnChanges(): void {
     if (this.inited) {
       this.setClassMap();
     }
