@@ -22,6 +22,7 @@ export interface ModalOptions<T = any, R = any> { // tslint:disable-line:no-any
   nzComponentParams?: Partial<T>;
   nzClosable?: boolean;
   nzIframe?: boolean;
+  nzDraggable?: boolean;
   nzMask?: boolean;
   nzMaskClosable?: boolean;
   nzMaskStyle?: object;

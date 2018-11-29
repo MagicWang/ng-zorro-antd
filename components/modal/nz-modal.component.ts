@@ -11,6 +11,7 @@ import {
   Inject,
   Injector,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -23,7 +24,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 
-import { Observable, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { NzMeasureScrollbarService } from '../core/services/nz-measure-scrollbar.service';
@@ -62,6 +63,14 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
   @Input() @InputBoolean() nzVisible: boolean = false;
   @Output() nzVisibleChange = new EventEmitter<boolean>();
+
+  @Input() @InputBoolean() nzDraggable: boolean = true; // add drag input property
+  private dragging: boolean;
+  private lastPageX = 0;
+  private lastPageY = 0;
+  private mousedownSubscription: Subscription;
+  private mousemoveSubscription: Subscription;
+  private mouseupSubscription: Subscription;
 
   @Input() nzZIndex: number = 1000;
   @Input() nzWidth: number | string = 520;
@@ -108,6 +117,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   @Input() @Output() nzOnCancel: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
   @ViewChild('modalContainer') modalContainer: ElementRef;
   @ViewChild('bodyContainer', { read: ViewContainerRef }) bodyContainer: ViewContainerRef;
+  @ViewChild('modalHeader') modalHeader: ElementRef;
 
   get hidden(): boolean {
     return !this.nzVisible && !this.animationState;
@@ -126,6 +136,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
     private renderer: Renderer2,
     private cfr: ComponentFactoryResolver,
     private elementRef: ElementRef,
+    private _ngZone: NgZone,
     private viewContainer: ViewContainerRef,
     private nzMeasureScrollbarService: NzMeasureScrollbarService,
     private modalControl: NzModalControlService,
@@ -189,6 +200,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
       if (this.container instanceof OverlayRef) {
         this.container.dispose();
+        this.unbindTriggerEvent();
       }
 
       this.unsubscribe$.next();
@@ -303,6 +315,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
     .then(() => { // Emit open/close event after animations over
       if (visible) {
         this.nzAfterOpen.emit();
+        this.bindTriggerEvent();
       } else {
         this.nzAfterClose.emit(closeResult);
         this.restoreFocus();
@@ -476,6 +489,82 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
     }
     if (this.focusTrap) {
       this.focusTrap.destroy();
+    }
+  }
+  /**
+   * drag event
+   */
+  private onMouseDown(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.nzDraggable) {
+      this.dragging = true;
+      this.lastPageX = event.clientX;
+      this.lastPageY = event.clientY;
+      const curPos = this.modalHeader.nativeElement.getBoundingClientRect();
+      const left = curPos.left;
+      const top = curPos.top;
+      this.modalContainer.nativeElement.style.position = 'absolute';
+      this.modalContainer.nativeElement.style.left = left + 'px';
+      this.modalContainer.nativeElement.style.top = top + 'px';
+    }
+  }
+  private onMouseMove(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.dragging) {
+      const deltaX = event.clientX - this.lastPageX;
+      const deltaY = event.clientY - this.lastPageY;
+      let leftPos = parseInt(this.modalContainer.nativeElement.style.left, 10) + deltaX;
+      let topPos = parseInt(this.modalContainer.nativeElement.style.top, 10) + deltaY;
+      leftPos = Math.max(0, Math.min(leftPos, window.innerWidth - this.modalContainer.nativeElement.offsetWidth));
+      topPos = Math.max(0, Math.min(topPos, window.innerHeight - this.modalContainer.nativeElement.offsetHeight));
+      this.modalContainer.nativeElement.style.left = leftPos + 'px';
+      this.modalContainer.nativeElement.style.top = topPos + 'px';
+      this.lastPageX = event.clientX;
+      this.lastPageY = event.clientY;
+    }
+  }
+  private onMouseLeave(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.nzDraggable) {
+      this.dragging = false;
+    }
+  }
+  private bindTriggerEvent(): void {
+    if (this.nzDraggable && this.modalHeader && this.modalHeader.nativeElement) {
+      this.mousedownSubscription = fromEvent(this.modalHeader.nativeElement, 'mousedown').subscribe((evt: MouseEvent) => {
+        this._ngZone.runOutsideAngular(() => {
+          this.onMouseDown(evt);
+          this.mousemoveSubscription = fromEvent(document, 'mousemove').subscribe((evt1: MouseEvent) => this.onMouseMove(evt1));
+          this.mouseupSubscription = fromEvent(document, 'mouseup').subscribe((evt2: MouseEvent)  => {
+            this.onMouseLeave(evt2);
+            if (this.mousemoveSubscription) {
+              this.mousemoveSubscription.unsubscribe();
+              this.mousemoveSubscription = null;
+            }
+            if (this.mouseupSubscription) {
+              this.mouseupSubscription.unsubscribe();
+              this.mouseupSubscription = null;
+            }
+          });
+        });
+      });
+    }
+  }
+  private unbindTriggerEvent(): void {
+    if (this.mousedownSubscription) {
+      this.mousedownSubscription.unsubscribe();
+      this.mousedownSubscription = null;
+    }
+    if (this.mousemoveSubscription) {
+      this.mousemoveSubscription.unsubscribe();
+      this.mousemoveSubscription = null;
+    }
+    if (this.mouseupSubscription) {
+      this.mouseupSubscription.unsubscribe();
+      this.mouseupSubscription = null;
     }
   }
 }

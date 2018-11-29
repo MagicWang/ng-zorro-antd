@@ -43,7 +43,7 @@
 
 <!-- [Predefined] Default Modal Content -->
 <ng-template #tplContentDefault>
-  <div *ngIf="nzTitle" class="ant-modal-header">
+  <div #modalHeader *ngIf="nzTitle" class="ant-modal-header" [class.draggable]="nzDraggable">
     <div class="ant-modal-title">
       <ng-container [ngSwitch]="true">
         <ng-container *ngSwitchCase="isTemplateRef(nzTitle)" [ngTemplateOutlet]="nzTitle"></ng-container>
