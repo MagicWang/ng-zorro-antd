@@ -345,6 +345,7 @@ export class NzTreeBaseService implements OnDestroy {
       // expand parent node
       if (p.getParentNode()) {
         expandedKeys.push(p.getParentNode().key);
+        p.getParentNode().isParentMatched = true;
         expandParent(p.getParentNode());
       }
     };
@@ -357,6 +358,7 @@ export class NzTreeBaseService implements OnDestroy {
         expandParent(n);
       } else {
         n.isMatched = false;
+        n.isParentMatched = false;
       }
       n.getChildren().forEach(child => {
         searchChild(child);
