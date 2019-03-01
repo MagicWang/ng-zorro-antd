@@ -1,8 +1,7 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector     : 'nz-demo-badge-change',
-  encapsulation: ViewEncapsulation.None,
   template     : `
     <div>
       <nz-badge [nzCount]="count">
@@ -22,7 +21,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
     </div>
   `,
   styles       : [ `
-    .ant-badge:not(.ant-badge-status) {
+    nz-badge {
       margin-right: 20px;
     }
 
@@ -32,6 +31,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
       border-radius: 4px;
       background: #eee;
       display: inline-block;
+      vertical-align: middle;
     }
   ` ]
 })

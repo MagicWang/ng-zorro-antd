@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
 
 import { FunctionProp } from '../../../core/types/common-wrap';
-import { valueFunctionProp } from '../../../core/util/convert';
 import { NzCalendarI18nInterface } from '../../../i18n/nz-i18n.interface';
 import {
   DisabledDateFn,
@@ -16,6 +15,9 @@ import { CandyDate } from '../candy-date';
 import { getTimeConfig, isAllowedDate } from '../util';
 
 @Component({
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // tslint:disable-next-line:component-selector
   selector   : 'date-range-popup',
   templateUrl: 'date-range-popup.component.html'
 })
@@ -38,27 +40,21 @@ export class DateRangePopupComponent implements OnInit, OnChanges {
   @Input() dropdownClassName: string;
 
   @Input() panelMode: PanelMode | PanelMode[];
-  @Output() panelModeChange = new EventEmitter<PanelMode | PanelMode[]>();
+  @Output() readonly panelModeChange = new EventEmitter<PanelMode | PanelMode[]>();
 
   @Input() value: CandyDate | CandyDate[];
-  @Output() valueChange = new EventEmitter<CandyDate | CandyDate[]>();
+  @Output() readonly valueChange = new EventEmitter<CandyDate | CandyDate[]>();
 
-  @Output() resultOk = new EventEmitter<void>(); // Emitted when done with date selecting
-  @Output() closePicker = new EventEmitter<void>(); // Notify outside to close the picker panel
-  // @Output() selectDate = new EventEmitter<CandyDate>(); // Emitted when the date is selected by click the date panel (if isRange, the returned date is from one of the range parts)
+  @Output() readonly resultOk = new EventEmitter<void>(); // Emitted when done with date selecting
+  @Output() readonly closePicker = new EventEmitter<void>(); // Notify outside to close the picker panel
 
   prefixCls: string = 'ant-calendar';
   showTimePicker: boolean = false;
   timeOptions: SupportTimeOptions | SupportTimeOptions[];
-  // valueForSelector: CandyDate[]; // Range ONLY
   valueForRangeShow: CandyDate[]; // Range ONLY
   selectedValue: CandyDate[]; // Range ONLY
   hoverValue: CandyDate[]; // Range ONLY
-  // initialValue: CandyDate = new CandyDate(); // Initial date to show when no value inputs
 
-  // get valueOrInitial(): CandyDate {
-  //   return this.value || this.initialValue;
-  // }
   get hasTimePicker(): boolean {
     return !!this.showTime;
   }
@@ -237,11 +233,11 @@ export class DateRangePopupComponent implements OnInit, OnChanges {
     return this.selectedValue && !!this.selectedValue[ 1 ] && !!this.selectedValue[ 0 ];
   }
 
-  disabledStartTime = (value: Date): DisabledTimeConfig => {
+  disabledStartTime = (value: Date | Date[]): DisabledTimeConfig => {
     return this.disabledTime && this.disabledTime(value, 'start');
   }
 
-  disabledEndTime = (value: Date): DisabledTimeConfig => {
+  disabledEndTime = (value: Date | Date[]): DisabledTimeConfig => {
     return this.disabledTime && this.disabledTime(value, 'end');
   }
 
@@ -286,7 +282,7 @@ export class DateRangePopupComponent implements OnInit, OnChanges {
   }
 
   onClickPresetRange(val: Date[]): void {
-    const value = valueFunctionProp(val);
+    const value = val;
     this.setValue([ new CandyDate(value[ 0 ]), new CandyDate(value[ 1 ]) ]);
     this.resultOk.emit();
   }

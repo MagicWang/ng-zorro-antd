@@ -2,8 +2,9 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { fakeAsync, inject, tick, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { dispatchMouseEvent } from '../core/testing';
-import { NzIconModule } from '../icon/nz-icon.module';
+import { NzIconTestModule } from '../icon/nz-icon-test.module';
 import { NzToolTipModule } from '../tooltip/nz-tooltip.module';
 import { NzPopoverDirective } from './nz-popover.directive';
 import { NzPopoverModule } from './nz-popover.module';
@@ -16,7 +17,7 @@ describe('NzPopover', () => {
 
   beforeEach(fakeAsync(() => {
     TestBed.configureTestingModule({
-      imports     : [ NzPopoverModule, NoopAnimationsModule, NzToolTipModule, NzIconModule ],
+      imports     : [ NzPopoverModule, NoopAnimationsModule, NzToolTipModule, NzIconTestModule ],
       declarations: [ NzPopoverTestWrapperComponent, NzPopoverTestNewComponent ]
     });
 
@@ -194,7 +195,7 @@ describe('NzPopover', () => {
     </ng-template>
     <div>
       <button>A</button>
-      <button #inBtnGroup nz-popover nzTitle="title-string" >B</button>
+      <button #inBtnGroup nz-popover nzTitle="title-string">B</button>
       <button>C</button>
     </div>
   `

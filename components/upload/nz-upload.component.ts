@@ -1,4 +1,3 @@
-// tslint:disable: no-any
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -11,7 +10,8 @@ import {
   Output,
   SimpleChange,
   SimpleChanges,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { of, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -26,23 +26,30 @@ import {
   UploadFilter,
   UploadListType,
   UploadType,
+  UploadXHRArgs,
   ZipButtonOptions
 } from './interface';
 import { NzUploadBtnComponent } from './nz-upload-btn.component';
+import { NzUploadListComponent } from './nz-upload-list.component';
 
 @Component({
   selector           : 'nz-upload',
   templateUrl        : './nz-upload.component.html',
   preserveWhitespaces: false,
+  encapsulation      : ViewEncapsulation.None,
   changeDetection    : ChangeDetectionStrategy.OnPush
 })
 export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
   private i18n$: Subscription;
+  @ViewChild('uploadComp') uploadComp: NzUploadBtnComponent;
+  @ViewChild('listComp') listComp: NzUploadListComponent;
+  // tslint:disable-next-line:no-any
   locale: any = {};
-  @ViewChild('upload') upload: NzUploadBtnComponent;
 
-  // region: fields
+  // #region fields
+
   @Input() nzType: UploadType = 'select';
+
   private _limit: number = 0;
 
   @Input()
@@ -68,39 +75,17 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
   @Input() nzFileType: string;
   @Input() nzAccept: string | string[];
   @Input() nzAction: string;
-  @Input() @InputBoolean() nzDirectory: boolean = false;
-  @Input() nzBeforeUpload: (file: UploadFile, fileList: UploadFile[]) => boolean | Observable<any>;
-  @Input() nzCustomRequest: (item: any) => Subscription;
+  @Input() @InputBoolean() nzDirectory = false;
+  @Input() @InputBoolean() nzOpenFileDialogOnClick = true;
+  @Input() nzBeforeUpload: (file: UploadFile, fileList: UploadFile[]) => boolean | Observable<boolean>;
+  @Input() nzCustomRequest: (item: UploadXHRArgs) => Subscription;
   @Input() nzData: {} | ((file: UploadFile) => {});
   @Input() nzFilter: UploadFilter[] = [];
   @Input() nzFileList: UploadFile[] = [];
-  @Output() nzFileListChange: EventEmitter<UploadFile[]> = new EventEmitter<UploadFile[]>();
-
-  private _disabled = false;
-
-  @Input()
-  set nzDisabled(value: boolean) {
-    this._disabled = toBoolean(value);
-  }
-
-  get nzDisabled(): boolean {
-    return this._disabled;
-  }
-
+  @Input() @InputBoolean() nzDisabled = false;
   @Input() nzHeaders: {} | ((file: UploadFile) => {});
   @Input() nzListType: UploadListType = 'text';
-
-  private _multiple = false;
-
-  @Input()
-  set nzMultiple(value: boolean) {
-    this._multiple = toBoolean(value);
-  }
-
-  get nzMultiple(): boolean {
-    return this._multiple;
-  }
-
+  @Input() @InputBoolean() nzMultiple = false;
   @Input() nzName = 'file';
 
   private _showUploadList: boolean | ShowUploadListInterface = true;
@@ -114,32 +99,14 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
     return this._showUploadList;
   }
 
-  private _showBtn = true;
-
-  @Input()
-  set nzShowButton(value: boolean) {
-    this._showBtn = toBoolean(value);
-  }
-
-  get nzShowButton(): boolean {
-    return this._showBtn;
-  }
-
-  private _withCredentials = false;
-
-  @Input()
-  set nzWithCredentials(value: boolean) {
-    this._withCredentials = toBoolean(value);
-  }
-
-  get nzWithCredentials(): boolean {
-    return this._withCredentials;
-  }
+  @Input() @InputBoolean() nzShowButton = true;
+  @Input() @InputBoolean() nzWithCredentials = false;
 
   @Input() nzRemove: (file: UploadFile) => boolean | Observable<boolean>;
   @Input() nzPreview: (file: UploadFile) => void;
 
-  @Output() nzChange: EventEmitter<UploadChangeParam> = new EventEmitter<UploadChangeParam>();
+  @Output() readonly nzChange: EventEmitter<UploadChangeParam> = new EventEmitter<UploadChangeParam>();
+  @Output() readonly nzFileListChange: EventEmitter<UploadFile[]> = new EventEmitter<UploadFile[]>();
 
   _btnOptions: ZipButtonOptions;
 
@@ -147,7 +114,8 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
     if (typeof this.nzShowUploadList === 'boolean' && this.nzShowUploadList) {
       this.nzShowUploadList = {
         showPreviewIcon: true,
-        showRemoveIcon : true
+        showRemoveIcon : true,
+        hidePreviewIconInNonImage: false
       };
     }
     // filters
@@ -176,6 +144,7 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       accept         : this.nzAccept,
       action         : this.nzAction,
       directory      : this.nzDirectory,
+      openFileDialogOnClick      : this.nzOpenFileDialogOnClick,
       beforeUpload   : this.nzBeforeUpload,
       customRequest  : this.nzCustomRequest,
       data           : this.nzData,
@@ -192,11 +161,13 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
     return this;
   }
 
-  // endregion
-  constructor(private cd: ChangeDetectorRef, private i18n: NzI18nService) {
+  // #endregion
+
+  constructor(private cdr: ChangeDetectorRef, private i18n: NzI18nService) {
   }
 
-  // region: upload
+  // #region upload
+
   private fileToObject(file: UploadFile): UploadFile {
     return {
       lastModified    : file.lastModified,
@@ -208,8 +179,8 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       response        : file.response,
       error           : file.error,
       percent         : 0,
-      // tslint:disable-next-line:no-angle-bracket-type-assertion
-      originFileObj   : <any> file
+      // tslint:disable-next-line:no-any
+      originFileObj   : file as any
     };
   }
 
@@ -227,37 +198,16 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       (file.error && file.error.statusText) || this.locale.uploadError;
   }
 
-  private genThumb(file: UploadFile): void {
-    if (
-      (this.nzListType !== 'picture' && this.nzListType !== 'picture-card') ||
-      typeof document === 'undefined' ||
-      typeof window === 'undefined' ||
-      !(window as any).FileReader ||
-      !(window as any).File ||
-      !(file.originFileObj instanceof File) ||
-      file.thumbUrl != null
-    ) {
-      return;
-    }
-
-    file.thumbUrl = '';
-
-    const reader = new FileReader();
-    reader.onloadend = () => file.thumbUrl = reader.result as string;
-    reader.readAsDataURL(file.originFileObj);
-  }
-
-  private onStart = (file: any): void => {
+  private onStart = (file: UploadFile): void => {
     if (!this.nzFileList) {
       this.nzFileList = [];
     }
     const targetItem = this.fileToObject(file);
     targetItem.status = 'uploading';
-    this.nzFileList.push(targetItem);
-    this.genThumb(targetItem);
+    this.nzFileList = this.nzFileList.concat(targetItem);
     this.nzFileListChange.emit(this.nzFileList);
     this.nzChange.emit({ file: targetItem, fileList: this.nzFileList, type: 'start' });
-    this.cd.detectChanges();
+    this.detectChangesList();
   }
 
   private onProgress = (e: { percent: number }, file: UploadFile): void => {
@@ -270,10 +220,10 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       fileList: this.nzFileList,
       type    : 'progress'
     });
-    this.cd.detectChanges();
+    this.detectChangesList();
   }
 
-  private onSuccess = (res: any, file: any, xhr?: any): void => {
+  private onSuccess = (res: {}, file: UploadFile): void => {
     const fileList = this.nzFileList;
     const targetItem = this.getFileItem(file, fileList);
     targetItem.status = 'done';
@@ -283,10 +233,10 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       fileList,
       type: 'success'
     });
-    this.cd.detectChanges();
+    this.detectChangesList();
   }
 
-  private onError = (err: any, file: any): void => {
+  private onError = (err: {}, file: UploadFile): void => {
     const fileList = this.nzFileList;
     const targetItem = this.getFileItem(file, fileList);
     targetItem.error = err;
@@ -297,11 +247,13 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       fileList,
       type: 'error'
     });
-    this.cd.detectChanges();
+    this.detectChangesList();
   }
 
-  // endregion
-  // region: drag
+  // #endregion
+
+  // #region drag
+
   private dragState: string;
 
   fileDrop(e: DragEvent): void {
@@ -312,10 +264,17 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
     this.setClassMap();
   }
 
-  // endregion
-  // region: list
+  // #endregion
+
+  // #region list
+
+  private detectChangesList(): void {
+    this.cdr.detectChanges();
+    this.listComp.detectChanges();
+  }
+
   onRemove = (file: UploadFile): void => {
-    this.upload.abort(file);
+    this.uploadComp.abort(file);
     file.status = 'removed';
     const fnRes = typeof this.nzRemove === 'function' ?
       this.nzRemove(file) : this.nzRemove == null ? true : this.nzRemove;
@@ -329,17 +288,18 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
         type    : 'removed'
       });
       this.nzFileListChange.emit(this.nzFileList);
-      this.cd.detectChanges();
+      this.cdr.detectChanges();
     });
   }
 
-  // endregion
-  // region: styles
-  prefixCls = 'ant-upload';
+  // #endregion
+
+  // #region styles
+
+  private prefixCls = 'ant-upload';
   classList: string[] = [];
 
-  setClassMap(): void {
-    const isDrag = this.nzType === 'drag';
+  private setClassMap(): void {
     let subCls: string[] = [];
     if (this.nzType === 'drag') {
       subCls = [
@@ -359,14 +319,15 @@ export class NzUploadComponent implements OnInit, OnChanges, OnDestroy {
       this.nzDisabled && `${this.prefixCls}-disabled`
     ].filter(item => !!item);
 
-    this.cd.detectChanges();
+    this.cdr.detectChanges();
   }
 
-  // endregion
+  // #endregion
+
   ngOnInit(): void {
     this.i18n$ = this.i18n.localeChange.subscribe(() => {
       this.locale = this.i18n.getLocaleData('Upload');
-      this.cd.detectChanges();
+      this.detectChangesList();
     });
   }
 

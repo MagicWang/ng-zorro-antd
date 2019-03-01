@@ -1,28 +1,18 @@
-import { Directive, ElementRef, HostBinding, Input } from '@angular/core';
+import { Directive, ElementRef, Input, Renderer2 } from '@angular/core';
 
-import { toBoolean } from '../core/util/convert';
+import { InputBoolean } from '../core/util/convert';
 
 @Directive({
   selector: '[nz-tab-label]',
   host    : {
-    '[class.ant-tabs-tab]': 'true'
+    '[class.ant-tabs-tab-disabled]': 'disabled'
   }
 })
 export class NzTabLabelDirective {
+  @Input() @InputBoolean() disabled = false;
 
-  private _disabled = false;
-
-  @Input()
-  @HostBinding('class.ant-tabs-tab-disabled')
-  set disabled(value: boolean) {
-    this._disabled = toBoolean(value);
-  }
-
-  get disabled(): boolean {
-    return this._disabled;
-  }
-
-  constructor(public elementRef: ElementRef) {
+  constructor(public elementRef: ElementRef, renderer: Renderer2) {
+    renderer.addClass(elementRef.nativeElement, 'ant-tabs-tab');
   }
 
   getOffsetLeft(): number {

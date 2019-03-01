@@ -1,17 +1,19 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Renderer2, ViewEncapsulation } from '@angular/core';
 
 @Component({
   selector           : 'nz-footer',
   preserveWhitespaces: false,
+  encapsulation      : ViewEncapsulation.None,
+  changeDetection    : ChangeDetectionStrategy.OnPush,
   templateUrl        : './nz-footer.component.html',
   styles             : [
-    `:host {
+      `nz-footer {
       display: block;
     }`
-  ],
-  host               : {
-    '[class.ant-layout-footer]': 'true'
-  }
+  ]
 })
 export class NzFooterComponent {
+  constructor(public elementRef: ElementRef, private renderer: Renderer2) {
+    this.renderer.addClass(this.elementRef.nativeElement, 'ant-layout-footer');
+  }
 }

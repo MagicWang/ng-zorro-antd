@@ -1,5 +1,4 @@
 import {
-  isDevMode,
   AfterContentChecked,
   Directive,
   ElementRef,
@@ -7,12 +6,38 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  Renderer2
+  Renderer2,
+  SimpleChanges
 } from '@angular/core';
-import { IconDirective } from '@ant-design/icons-angular';
+import { IconDirective, ThemeType } from '@ant-design/icons-angular';
+import { InputBoolean } from '../core/util';
 import { NzIconService } from './nz-icon.service';
 
 const iconTypeRE = /^anticon\-\w/;
+
+const getIconTypeClass = (className: string): { name: string, index: number } => {
+  if (!className) {
+    return undefined;
+  } else {
+    const classArr = className.split(/\s/);
+    const index = classArr.findIndex((cls => cls !== 'anticon' && cls !== 'anticon-spin' && !!cls.match(iconTypeRE)));
+    return index === -1 ? undefined : { name: classArr[ index ], index };
+  }
+};
+
+const normalizeType = (rawType: string): { type: string, crossError: boolean, verticalError: boolean } => {
+  const ret = { type: rawType, crossError: false, verticalError: false };
+  ret.type = rawType ? rawType.replace('anticon-', '') : '';
+  if (ret.type.includes('verticle')) {
+    ret.type = 'up';
+    ret.verticalError = true;
+  }
+  if (ret.type.startsWith('cross')) {
+    ret.type = 'close';
+    ret.crossError = true;
+  }
+  return ret;
+};
 
 /**
  * This directive extends IconDirective to provide:
@@ -20,171 +45,177 @@ const iconTypeRE = /^anticon\-\w/;
  * - IconFont support
  * - spinning
  * - old API compatibility
+ *
+ * @break-changes
+ *
+ * - old API compatibility, icon class names would not be supported.
+ * - properties that not started with `nz`.
  */
 @Directive({
   selector: 'i.anticon, [nz-icon]'
 })
 export class NzIconDirective extends IconDirective implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+  /** Properties with `nz` prefix. */
+  @Input() @InputBoolean() set nzSpin(value: boolean) { this.spin = value; }
+  @Input() nzRotate: number = 0;
+  @Input() set nzType(value: string) { this.type = value; }
+  @Input() set nzTheme(value: ThemeType) { this.theme = value; }
+  @Input() set nzTwotoneColor(value: string) { this.twoToneColor = value; }
+  @Input() set nzIconfont(value: string) { this.iconfont = value; }
+
+  /** @deprecated 8.0.0 avoid exposing low layer API. */
   @Input() spin = false;
+
+  /** @deprecated 8.0.0 avoid exposing low layer API. */
   @Input() iconfont: string;
 
-  // private _renderer: Renderer2;
-  private _classNameObserver: MutationObserver;
-  private _el: HTMLElement;
-
-  /**
-   * In order to make this directive compatible to old API, we had do some ugly stuff here.
-   * TODO: Should be removed in next major version.
-   */
-  private _classChangeHandler(className: string): void {
-    if (className) {
-      const iconType = className
-        .split(/\s/)
-        .filter(cls => cls !== 'anticon' && cls !== 'anticon-spin' && !!cls.match(iconTypeRE))[ 0 ];
-
-      if (!iconType) {
-        return;
+  @Input()
+  set type(value: string) {
+    if (value && value.startsWith('anticon')) {
+      const rawClass = getIconTypeClass(value);
+      const type = rawClass ? normalizeType(rawClass.name).type : '';
+      if (type && this.type !== type) {
+        this._type = type;
       }
-
-      let parsedIconType = iconType.replace('anticon-', '');
-      if (parsedIconType.includes('verticle')) {
-        parsedIconType = parsedIconType.replace('verticle', 'vertical');
-        this._warnAPI('cross');
-      }
-      if (parsedIconType.startsWith('cross')) {
-        parsedIconType = parsedIconType.replace('cross', 'close');
-        this._warnAPI('vertical');
-      }
-
-      // Only change icon when icon type does change.
-      if (this.type !== parsedIconType) {
-        this.type = parsedIconType;
-        this._changeIcon().catch(err => {
-          console.warn('[NG-ZORRO]', `You can find more about this error on http://ng.ant.design/components/icon/en\n`, err);
-        });
-      }
-    }
-  }
-
-  /**
-   * In order to make this directive compatible to old API, we had do some ugly stuff here.
-   * TODO: Should be removed in next major version.
-   */
-  private _warnAPI(type: 'old' | 'cross' | 'vertical'): void {
-    if (isDevMode()) {
-      if (type === 'old' && !this._iconService.warnedAboutAPI) {
-        console.warn('[NG-ZORRO]', `<i class="anticon"></i> would be deprecated soon. Please use <i nz-icon type=""></i> API.`);
-        this._iconService.warnedAboutAPI = true;
-      }
-      if (type === 'cross' && !this._iconService.warnedAboutCross) {
-        console.warn('[NG-ZORRO]', `'cross' icon is replaced by 'close' icon.`);
-        this._iconService.warnedAboutCross = true;
-      }
-      if (type === 'vertical' && !this._iconService.warnedAboutVertical) {
-        console.warn('[NG-ZORRO]', `'verticle' is misspelled, would be corrected in the next major version.`);
-        this._iconService.warnedAboutVertical = true;
-      }
-    }
-  }
-
-  private _toggleSpin(svg: SVGElement): void {
-    if ((this.spin || this.type === 'loading') && !this._el.classList.contains('anticon-spin')) {
-      this._renderer.addClass(svg, 'anticon-spin');
     } else {
-      this._renderer.removeClass(svg, 'anticon-spin');
+      this._type = value;
     }
   }
 
-  private _setClassName(): void {
-    // If there's not an anticon class, usually a new API icon, get the icon class name back.
-    // anticon should be added before other class names.
-    if (this._el && typeof this.type === 'string') {
-      const iconClassNameArr = this._el.className.split(/\s/);
-      const oldTypeNameIndex = iconClassNameArr.findIndex(cls => cls !== 'anticon' && cls !== 'anticon-spin' && !!cls.match(iconTypeRE));
+  get type(): string {
+    return this._type;
+  }
 
-      if (oldTypeNameIndex !== -1) {
-        iconClassNameArr.splice(oldTypeNameIndex, 1, `anticon-${this.type}`);
-        this._renderer.setAttribute(this._el, 'class', iconClassNameArr.join(' '));
-      } else {
-        this._renderer.addClass(this._el, `anticon-${this.type}`);
-      }
+  private classNameObserver: MutationObserver;
+  private el = this.elementRef.nativeElement;
+  private _type: string;
+
+  /**
+   * Replacement of `changeIcon` for more modifications.
+   * @param oldAPI
+   */
+  private changeIcon2(oldAPI: boolean = false): void {
+    if (!oldAPI) {
+      this.setClassName();
     }
-  }
-
-  private _setSVGData(svg: SVGElement): void {
-    if (typeof this.type === 'string') {
-      this._renderer.setAttribute(svg, 'data-icon', this.type);
-      this._renderer.setAttribute(svg, 'aria-hidden', 'true');
-    }
-  }
-
-  private _addExtraModifications(svg: SVGElement): void {
-    this._toggleSpin(svg);
-    this._setSVGData(svg);
-  }
-
-  constructor(public _iconService: NzIconService, public _elementRef: ElementRef, public _renderer: Renderer2) {
-    super(_iconService, _elementRef, _renderer);
-  }
-
-  ngOnChanges(): void {
-    if (!this.iconfont) {
-      // For ant design icons.
-      this._setClassName();
-      this._changeIcon().then(svg => {
-        this._addExtraModifications(svg);
-      }).catch((err) => {
-        if (err) {
-          console.error(err);
-          console.warn('[NG-ZORRO]', `You can find more about this error on http://ng.ant.design/components/icon/en`);
+    this._changeIcon()
+      .then(svg => {
+        this.setSVGData(svg);
+        if (!oldAPI && svg) {
+          this.handleSpin(svg);
+          this.handleRotate(svg);
         }
       });
-    } else {
-      // For iconfont icons.
-      this._setSVGElement(this._iconService.createIconfontIcon(`#${this.iconfont}`));
+  }
+
+  private classChangeHandler(className: string): void {
+    const ret = getIconTypeClass(className);
+    if (ret) {
+      const { type, crossError, verticalError } = normalizeType(ret.name);
+      if (crossError) {
+        this.iconService.warnAPI('cross');
+      }
+      if (verticalError) {
+        this.iconService.warnAPI('vertical');
+      }
+      if (this.type !== type) {
+        this._type = type;
+        this.changeIcon2(true);
+      }
     }
   }
 
-  /**
-   * Subscribe to DOM element attribute change events, so when user use ngClass or something the icon changes with it.
-   */
-  ngOnInit(): void {
-    this._el = this._elementRef.nativeElement;
+  private handleSpin(svg: SVGElement): void {
+    if ((this.spin || this.type === 'loading') && !this.elementRef.nativeElement.classList.contains('anticon-spin')) {
+      this.renderer.addClass(svg, 'anticon-spin');
+    } else {
+      this.renderer.removeClass(svg, 'anticon-spin');
+    }
+  }
 
-    // Make the component compatible to old class="anticon" API.
-    if (this._el && !this.type) {
-      this._warnAPI('old');
-      this._classChangeHandler(this._el.className);
-      this._classNameObserver = new MutationObserver((mutations: MutationRecord[]) => {
+  private handleRotate(svg: SVGElement): void {
+    if (this.nzRotate) {
+      this.renderer.setAttribute(svg, 'style', `transform: rotate(${this.nzRotate}deg)`);
+    } else {
+      this.renderer.removeAttribute(svg, 'style');
+    }
+  }
+
+  private setClassName(): void {
+    if (typeof this.type === 'string') {
+      const iconClassNameArr = this.el.className.split(/\s/);
+      const ret = getIconTypeClass(this.el.className);
+      if (ret) {
+        iconClassNameArr.splice(ret.index, 1, `anticon-${this.type}`);
+        this.renderer.setAttribute(this.el, 'class', iconClassNameArr.join(' '));
+      } else {
+        this.renderer.addClass(this.el, `anticon-${this.type}`);
+      }
+    }
+  }
+
+  private setSVGData(svg: SVGElement): void {
+    if (typeof this.type === 'string' && svg) {
+      this.renderer.setAttribute(svg, 'data-icon', this.type);
+      this.renderer.setAttribute(svg, 'aria-hidden', 'true');
+    }
+  }
+
+  constructor(public iconService: NzIconService, public elementRef: ElementRef, public renderer: Renderer2) {
+    super(iconService, elementRef, renderer);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const { type, nzType, nzTwotoneColor, twoToneColor, spin, nzSpin, theme, nzTheme, nzRotate } = changes;
+
+    if (type || nzType || nzTwotoneColor || twoToneColor || spin || nzSpin || theme || nzTheme) {
+      this.changeIcon2();
+    } else if (nzRotate) {
+      this.handleRotate(this.el.firstChild);
+    } else {
+      this._setSVGElement(this.iconService.createIconfontIcon(`#${this.iconfont}`));
+    }
+  }
+
+  ngOnInit(): void {
+    // If `this.type` is not specified and `classList` contains `anticon`, it should be an icon using old API.
+    if (!this.type && this.el.classList.contains('anticon')) {
+      this.iconService.warnAPI('old');
+      // Get `type` from `className`. If not, initial rendering would be missed.
+      this.classChangeHandler(this.el.className);
+      // Add `class` mutation observer.
+      this.classNameObserver = new MutationObserver((mutations: MutationRecord[]) => {
         mutations
           .filter((mutation: MutationRecord) => mutation.attributeName === 'class')
-          .forEach((mutation: MutationRecord) => this._classChangeHandler((mutation.target as HTMLElement).className));
+          .forEach((mutation: MutationRecord) => this.classChangeHandler((mutation.target as HTMLElement).className));
       });
-      this._classNameObserver.observe(this._elementRef.nativeElement, { attributes: true });
+      this.classNameObserver.observe(this.el, { attributes: true });
     }
-
-    if (!this._el.classList.contains('anticon')) {
-      this._renderer.setAttribute(this._el, 'class', `anticon ${this._el.className}`);
-    }
-
-    if (this.type) {
-      this._setClassName();
+    // If `classList` does not contain `anticon`, add it before other class names.
+    if (!this.el.classList.contains('anticon')) {
+      this.renderer.setAttribute(this.el, 'class', `anticon ${this.el.className}`.trim());
     }
   }
 
   ngOnDestroy(): void {
-    if (this._classNameObserver) {
-      this._classNameObserver.disconnect();
+    if (this.classNameObserver) {
+      this.classNameObserver.disconnect();
     }
   }
 
   /**
-   * If custom content is provided, should try to normalize the svg element.
+   * If custom content is provided, try to normalize SVG elements.
    */
   ngAfterContentChecked(): void {
-    const children = (this._elementRef.nativeElement as HTMLElement).children;
-    if (children && children.length && !this.type) {
-      this._iconService.normalizeSvgElement(children[ 0 ] as SVGElement);
+    const children = this.el.children;
+    let length = children.length;
+    if (!this.type && children.length) {
+      while (length--) {
+        const child = children[ length ];
+        if (child.tagName.toLowerCase() === 'svg') {
+          this.iconService.normalizeSvgElement(child as SVGElement);
+        }
+      }
     }
   }
 }

@@ -1,14 +1,16 @@
+import { FocusMonitor } from '@angular/cdk/a11y';
 import {
   forwardRef,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
   OnInit,
-  Renderer2
+  Renderer2,
+  ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-
-import { toBoolean } from '../core/util/convert';
+import { InputBoolean } from '../core/util/convert';
 
 export interface NzCheckBoxOptionInterface {
   label: string;
@@ -20,6 +22,7 @@ export interface NzCheckBoxOptionInterface {
 @Component({
   selector           : 'nz-checkbox-group',
   preserveWhitespaces: false,
+  encapsulation      : ViewEncapsulation.None,
   templateUrl        : './nz-checkbox-group.component.html',
   providers          : [
     {
@@ -30,28 +33,36 @@ export interface NzCheckBoxOptionInterface {
   ]
 })
 export class NzCheckboxGroupComponent implements ControlValueAccessor, OnInit {
-  private _disabled = false;
-  private el: HTMLElement = this.elementRef.nativeElement;
-  private prefixCls = 'ant-checkbox-group';
-  private onChange = Function.prototype;
-  private onTouched = Function.prototype;
-  options: NzCheckBoxOptionInterface[];
-
-  @Input()
-  set nzDisabled(value: boolean) {
-    this._disabled = toBoolean(value);
-  }
-
-  get nzDisabled(): boolean {
-    return this._disabled;
-  }
+  // tslint:disable-next-line:no-any
+  onChange: (value: any) => void = () => null;
+  // tslint:disable-next-line:no-any
+  onTouched: () => any = () => null;
+  options: NzCheckBoxOptionInterface[] = [];
+  @Input() @InputBoolean() nzDisabled = false;
 
   onOptionChange(): void {
     this.onChange(this.options);
   }
 
+  trackByOption(_index: number, option: NzCheckBoxOptionInterface): string {
+    return option.value;
+  }
+
+  constructor(private elementRef: ElementRef, private focusMonitor: FocusMonitor, private cdr: ChangeDetectorRef, renderer: Renderer2) {
+    renderer.addClass(elementRef.nativeElement, 'ant-checkbox-group');
+  }
+
+  ngOnInit(): void {
+    this.focusMonitor.monitor(this.elementRef, true).subscribe(focusOrigin => {
+      if (!focusOrigin) {
+        Promise.resolve().then(() => this.onTouched());
+      }
+    });
+  }
+
   writeValue(value: NzCheckBoxOptionInterface[]): void {
     this.options = value;
+    this.cdr.markForCheck();
   }
 
   registerOnChange(fn: (_: NzCheckBoxOptionInterface[]) => {}): void {
@@ -64,12 +75,6 @@ export class NzCheckboxGroupComponent implements ControlValueAccessor, OnInit {
 
   setDisabledState(isDisabled: boolean): void {
     this.nzDisabled = isDisabled;
-  }
-
-  constructor(private elementRef: ElementRef, private renderer: Renderer2) {
-  }
-
-  ngOnInit(): void {
-    this.renderer.addClass(this.el, `${this.prefixCls}`);
+    this.cdr.markForCheck();
   }
 }

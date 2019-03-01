@@ -2,7 +2,7 @@ import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { async, fakeAsync, tick, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
-import { NzIconModule } from '../icon/nz-icon.module';
+import { NzIconTestModule } from '../icon/nz-icon-test.module';
 
 import { NzStepComponent } from './nz-step.component';
 import { NzStepsComponent } from './nz-steps.component';
@@ -11,7 +11,7 @@ import { NzStepsModule } from './nz-steps.module';
 describe('steps', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports     : [ NzStepsModule, NzIconModule ],
+      imports     : [ NzStepsModule, NzIconTestModule ],
       declarations: [ NzTestOuterStepsComponent, NzTestInnerStepStringComponent, NzTestInnerStepTemplateComponent, NzTestStepForComponent ]
     });
     TestBed.compileComponents();
@@ -86,6 +86,12 @@ describe('steps', () => {
       fixture.detectChanges();
       expect(outStep.nativeElement.firstElementChild.className).toBe('ant-steps ant-steps-vertical');
     });
+    it('should label placement display correct', () => {
+      fixture.detectChanges();
+      testComponent.labelPlacement = 'vertical';
+      fixture.detectChanges();
+      expect(outStep.nativeElement.firstElementChild.classList).toContain('ant-steps-label-vertical');
+    });
     it('should status display correct', fakeAsync(() => {
       fixture.detectChanges();
       tick();
@@ -157,12 +163,10 @@ describe('steps', () => {
   describe('inner step string', () => {
     let fixture;
     let testComponent;
-    let outStep;
     let innerSteps;
     beforeEach(() => {
       fixture = TestBed.createComponent(NzTestInnerStepStringComponent);
       testComponent = fixture.debugElement.componentInstance;
-      outStep = fixture.debugElement.query(By.directive(NzStepsComponent));
       innerSteps = fixture.debugElement.queryAll(By.directive(NzStepComponent));
     });
     it('should status display correct', () => {
@@ -172,9 +176,9 @@ describe('steps', () => {
       expect(innerSteps[ 2 ].nativeElement.className).toBe('ant-steps-item ant-steps-item-process ant-steps-custom');
       testComponent.status = 'wait';
       fixture.detectChanges();
-      expect(innerSteps[ 0 ].nativeElement.className).toBe('ant-steps-item ant-steps-item-wait ant-steps-custom');
-      expect(innerSteps[ 1 ].nativeElement.className).toBe('ant-steps-item ant-steps-item-wait ant-steps-custom');
-      expect(innerSteps[ 2 ].nativeElement.className).toBe('ant-steps-item ant-steps-item-wait ant-steps-custom');
+      expect(innerSteps[ 0 ].nativeElement.className).toBe('ant-steps-item ant-steps-custom ant-steps-item-wait');
+      expect(innerSteps[ 1 ].nativeElement.className).toBe('ant-steps-item ant-steps-custom ant-steps-item-wait');
+      expect(innerSteps[ 2 ].nativeElement.className).toBe('ant-steps-item ant-steps-custom ant-steps-item-wait');
     });
     it('should title display correct', () => {
       fixture.detectChanges();
@@ -197,13 +201,9 @@ describe('steps', () => {
   });
   describe('inner step template', () => {
     let fixture;
-    let testComponent;
-    let outStep;
     let innerSteps;
     beforeEach(() => {
       fixture = TestBed.createComponent(NzTestInnerStepTemplateComponent);
-      testComponent = fixture.debugElement.componentInstance;
-      outStep = fixture.debugElement.query(By.directive(NzStepsComponent));
       innerSteps = fixture.debugElement.queryAll(By.directive(NzStepComponent));
     });
     it('should title display correct', () => {
@@ -241,7 +241,7 @@ describe('steps', () => {
 @Component({
   selector: 'nz-test-outer-steps',
   template: `
-    <nz-steps [nzCurrent]="current" [nzDirection]="direction" [nzSize]="size" [nzStatus]="status" [nzProgressDot]="progressDot" [nzStartIndex]="startIndex">
+    <nz-steps [nzCurrent]="current" [nzDirection]="direction" [nzLabelPlacement]="labelPlacement" [nzSize]="size" [nzStatus]="status" [nzProgressDot]="progressDot" [nzStartIndex]="startIndex">
       <nz-step nzTitle="0title" nzDescription="0description"></nz-step>
       <nz-step nzTitle="1title" nzDescription="1description"></nz-step>
       <nz-step nzTitle="2title" nzDescription="2description"></nz-step>
@@ -256,6 +256,7 @@ export class NzTestOuterStepsComponent {
   @ViewChild('progressTemplate') progressTemplate: TemplateRef<void>;
   current = 0;
   direction = 'horizontal';
+  labelPlacement = 'horizontal';
   size = 'default';
   status = 'process';
   progressDot = false;

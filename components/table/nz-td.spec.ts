@@ -1,14 +1,16 @@
 import { Component } from '@angular/core';
 import { fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { NzTableModule } from './nz-table.module';
+import { NzCheckboxModule } from '../checkbox';
+import { createFakeEvent } from '../core/testing';
 import { NzTdComponent } from './nz-td.component';
 
 describe('nz-td', () => {
   beforeEach(fakeAsync(() => {
     TestBed.configureTestingModule({
-      imports     : [ NzTableModule ],
-      declarations: [ NzTestTdComponent ]
+      imports     : [ NzCheckboxModule, FormsModule ],
+      declarations: [ NzTestTdComponent, NzTdComponent ]
     });
     TestBed.compileComponents();
   }));
@@ -100,6 +102,16 @@ describe('nz-td', () => {
       expect(td.nativeElement.querySelector('.ant-table-row-expand-icon').classList).toContain('ant-table-row-expanded');
       expect(testComponent.expandChange).toHaveBeenCalledTimes(1);
     });
+    it('should click expand event stopPropagation', () => {
+      testComponent.showExpand = true;
+      fixture.detectChanges();
+      const input: HTMLElement = td.nativeElement.querySelector('.ant-table-row-expand-icon');
+      const fakeInputChangeEvent = createFakeEvent('click', true, true);
+      spyOn(fakeInputChangeEvent, 'stopPropagation');
+      input.dispatchEvent(fakeInputChangeEvent);
+      fixture.detectChanges();
+      expect(fakeInputChangeEvent.stopPropagation).toHaveBeenCalled();
+    });
     it('should be row index when index-size is 0', () => {
       testComponent.indentSize = 0;
       fixture.detectChanges();
@@ -180,4 +192,5 @@ export class NzTestTdComponent {
     <td class="nz-disable-td" [nzShowCheckbox]="true"></td>
   `
 })
-export class NzTestDisableTdComponent {}
+export class NzTestDisableTdComponent {
+}

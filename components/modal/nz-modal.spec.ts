@@ -11,16 +11,19 @@ import { NzButtonComponent } from '../button/nz-button.component';
 import { NzButtonModule } from '../button/nz-button.module';
 import { NzMeasureScrollbarService } from '../core/services/nz-measure-scrollbar.service';
 
+import { ESCAPE } from '@angular/cdk/keycodes';
+import { dispatchKeyboardEvent } from '../core/testing';
 import en_US from '../i18n/languages/en_US';
 import { NzI18nService } from '../i18n/nz-i18n.service';
-import { NzIconModule } from '../icon/nz-icon.module';
+import { NzIconTestModule } from '../icon/nz-icon-test.module';
 import { CssUnitPipe } from './css-unit.pipe';
-import { NZ_MODAL_CONFIG } from './nz-modal-config';
 import { NzModalControlService } from './nz-modal-control.service';
 import { NzModalRef } from './nz-modal-ref.class';
 import { NzModalComponent } from './nz-modal.component';
 import { NzModalModule } from './nz-modal.module';
 import { NzModalService } from './nz-modal.service';
+
+let counter = 0;
 
 describe('modal testing (legacy)', () => {
   let instance;
@@ -112,13 +115,14 @@ describe('modal testing (legacy)', () => {
   }); // /confirm-promise
 
   describe('NormalModal: created by service with most APIs', () => {
-    const tempModalId = generateUniqueId(); // Temp unique id to mark the confirm modal that created by service
+    let tempModalId; // Temp unique id to mark the confirm modal that created by service
     let modalAgent: NzModalRef;
     let modalElement: HTMLElement;
+    let modalInstance;
 
     beforeEach(async(() => {
       TestBed.configureTestingModule({
-        imports: [ NoopAnimationsModule, NzModalModule, NzIconModule ],
+        imports: [ NoopAnimationsModule, NzModalModule, NzIconTestModule ],
         declarations: [ TestBasicServiceComponent ],
         providers   : [ NzMeasureScrollbarService ]
       }).compileComponents();
@@ -129,13 +133,13 @@ describe('modal testing (legacy)', () => {
       instance = fixture.debugElement.componentInstance;
       modalAgent = instance.basicModal;
       modalElement = modalAgent.getElement();
+      tempModalId = generateUniqueId();
       modalElement.classList.add(tempModalId); // Mark with id
+      modalInstance = modalAgent.getInstance();
     });
 
     it('should correctly render all basic props', fakeAsync(() => {
-      const modalInstance = modalAgent.getInstance();
       spyOn(console, 'log');
-
       // [Hack] Codes that can't be covered by normal operations
       // tslint:disable-next-line:no-any
       expect((modalInstance as any).changeVisibleFromInside(true) instanceof Promise).toBe(true);
@@ -156,11 +160,18 @@ describe('modal testing (legacy)', () => {
       expect(isButtonLoading(getButtonCancel(modalElement))).not.toBeFalsy();
       expect(modalElement.querySelector('.ant-modal-close')).toBeFalsy();
       expect(modalElement.querySelector('.ant-modal-mask')).toBeFalsy();
+      expect(getButtonOk(modalElement).disabled).toBeFalsy();
+      expect(getButtonCancel(modalElement).disabled).toBeFalsy();
 
       // click ok button
       getButtonOk(modalElement).click();
+      flush();
       expect(console.log).toHaveBeenCalledWith('click ok');
       expectModalDestroyed(tempModalId, false); // shouldn't destroy when ok button returns false
+    })); // /basic props
+
+    it('should be closed when clicking cancel button', fakeAsync(() => {
+      spyOn(console, 'log');
       // change and click mask
       modalInstance.nzMask = true;
       // should show mask
@@ -178,9 +189,22 @@ describe('modal testing (legacy)', () => {
       (modalElement.querySelector('.ant-modal-wrap') as HTMLElement).click();
       expect(console.log).not.toHaveBeenCalledWith('click cancel');
       flush();
-      // TODO: repair this, why my modifying this case would influence another case?
-      // expectModalDestroyed(tempModalId, true); // should be destroyed
-    })); // /basic props
+      fixture.detectChanges();
+      expectModalDestroyed(tempModalId, true); // should be destroyed
+    }));
+
+    it('should be closed when clicking ESC', fakeAsync(() => {
+      // click 'ESC' key
+      dispatchKeyboardEvent(document.body, 'keydown', ESCAPE);
+      fixture.detectChanges();
+      expectModalDestroyed(tempModalId, false);
+
+      modalInstance.nzKeyboard = true;
+      dispatchKeyboardEvent(document.body, 'keydown', ESCAPE);
+      flush();
+      fixture.detectChanges();
+      expectModalDestroyed(tempModalId, true);
+    }));
   });
 
   describe('NormalModal: created by service with vary nzContent and nzFooter', () => {
@@ -379,6 +403,7 @@ describe('NzModal', () => {
       fixture = TestBed.createComponent(ModalByServiceComponent);
     });
     afterEach(fakeAsync(() => { // wait all openModals tobe closed to clean up the ModalManager as it is globally static
+      document.documentElement.classList.remove('cdk-global-scrollblock');
       modalService.closeAll();
       fixture.detectChanges();
       tick(1000);
@@ -514,56 +539,27 @@ describe('NzModal', () => {
       expect(spyCancel).toHaveBeenCalled();
     });
 
-    it('should add/remove padding-left depends on current scrollbar (just functions mockup)', () => {
+    it('should block body scroll', fakeAsync(() => {
+      console.log(document.documentElement.classList);
+      const forceScrollElement = document.createElement('div');
+      document.body.appendChild(forceScrollElement);
+      forceScrollElement.style.width = '100px';
+      forceScrollElement.style.height = '3000px';
+      forceScrollElement.style.background = 'rebeccapurple';
+
       const modalRef = modalService.create();
-      const modalInstance = modalRef.getInstance();
-      spyOnProperty(window, 'innerHeight').and.returnValue(null); // Disable innerHeight to test another branch
-      // tslint:disable-next-line:no-string-literal
-      spyOnProperty(modalInstance['document'].body, 'scrollHeight').and.returnValue(200);
-      // tslint:disable-next-line:no-string-literal
-      spyOnProperty(modalInstance['document'].documentElement, 'clientHeight').and.returnValue(100);
-      // tslint:disable-next-line:no-string-literal
-      expect(modalInstance['hasBodyScrollBar']()).toBeTruthy();
+      tick(600);
+      fixture.detectChanges();
 
-      // tslint:disable-next-line:no-string-literal
-      const spySetStyle = spyOn(modalInstance['renderer'], 'setStyle');
-      // tslint:disable-next-line:no-string-literal
-      modalInstance['changeBodyOverflow'](1);
-      expect(spySetStyle).toHaveBeenCalled();
-    });
-  });
-});
+      expect(document.documentElement.classList).toContain('cdk-global-scrollblock');
 
-describe('NzModal with config settled', () => {
-  let modalService: NzModalService;
+      modalRef.close();
+      tick(600);
+      fixture.detectChanges();
 
-  beforeEach(fakeAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [ NzModalModule ],
-      providers: [{
-        provide: NZ_MODAL_CONFIG,
-        useValue: {
-          autoBodyPadding: false // Disable body padding
-        }
-      }]
-    }).compileComponents();
-  }));
-
-  beforeEach(inject([ NzModalService ], (ms: NzModalService) => {
-    modalService = ms;
-  }));
-
-  it('should disable body padding', () => {
-    const modalInstance = modalService.create().getInstance();
-    // Both style operating should not be called
-    // tslint:disable-next-line:no-string-literal
-    const setStyle = spyOn(modalInstance['renderer'], 'setStyle');
-    // tslint:disable-next-line:no-string-literal
-    const removeStyle = spyOn(modalInstance['renderer'], 'removeStyle');
-    // tslint:disable-next-line:no-string-literal
-    modalInstance['changeBodyOverflow']();
-    expect(setStyle).not.toHaveBeenCalled();
-    expect(removeStyle).not.toHaveBeenCalled();
+      expect(document.documentElement.classList).not.toContain('cdk-global-scrollblock');
+      document.body.removeChild(forceScrollElement);
+    }));
   });
 });
 
@@ -604,7 +600,7 @@ class NzDemoModalAsyncComponent {
 
   handleOk(): void {
     this.isOkLoading = true;
-    window.setTimeout(() => {
+    setTimeout(() => {
       this.isVisible = false;
       this.isOkLoading = false;
     }, 3000);
@@ -658,6 +654,7 @@ class TestBasicServiceComponent {
       nzTitle: '<b>TEST BOLD TITLE</b>',
       nzContent: '<p>test html content</p>',
       nzClosable: false,
+      nzKeyboard: false,
       nzMask: false,
       nzMaskClosable: false,
       nzMaskStyle: { opacity: 0.4 },
@@ -666,6 +663,8 @@ class TestBasicServiceComponent {
       nzOkText: 'custom ok',
       nzOkType: 'success',
       nzOkLoading: false,
+      nzOkDisabled: false,
+      nzCancelDisabled: false,
       nzOnOk: () => { console.log('click ok'); return false; },
       nzCancelText: 'custom cancel',
       nzCancelLoading: true,
@@ -785,7 +784,6 @@ function expectModalDestroyed(classId: string, destroyed: boolean): void {
   }
 }
 
-let counter = 0;
 function generateUniqueId(): string {
   return `testing-uniqueid-${counter++}`;
 }

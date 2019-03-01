@@ -10,7 +10,8 @@ import {
   Input,
   OnDestroy,
   Output,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { distinctUntilChanged, throttleTime } from 'rxjs/operators';
@@ -30,6 +31,7 @@ const sharpMatcherRegx = /#([^#]+)$/;
   selector           : 'nz-anchor',
   preserveWhitespaces: false,
   templateUrl        : './nz-anchor.component.html',
+  encapsulation      : ViewEncapsulation.None,
   changeDetection    : ChangeDetectionStrategy.OnPush
 })
 export class NzAnchorComponent implements OnDestroy, AfterViewInit {
@@ -37,11 +39,11 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   private links: NzAnchorLinkComponent[] = [];
   private animating = false;
   private target: Element = null;
-  scroll$: Subscription = null;
+  private scroll$: Subscription = null;
+  private destroyed = false;
+  @ViewChild('ink') private ink: ElementRef;
   visible = false;
   wrapperStyle: {} = { 'max-height': '100vh' };
-  @ViewChild('wrap') private wrap: ElementRef;
-  @ViewChild('ink') private ink: ElementRef;
 
   // region: fields
 
@@ -93,19 +95,19 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   @Input()
-  set nzTarget(el: Element) {
-    this.target = el;
+  set nzTarget(el: string | Element) {
+    this.target = typeof el === 'string' ? this.doc.querySelector(el) : el;
     this.registerScrollEvent();
   }
 
-  @Output() nzClick: EventEmitter<string> = new EventEmitter();
+  @Output() readonly nzClick: EventEmitter<string> = new EventEmitter();
 
-  @Output() nzScroll: EventEmitter<NzAnchorLinkComponent> = new EventEmitter();
+  @Output() readonly nzScroll: EventEmitter<NzAnchorLinkComponent> = new EventEmitter();
 
   // endregion
 
   /* tslint:disable-next-line:no-any */
-  constructor(private scrollSrv: NzScrollService, @Inject(DOCUMENT) private doc: any, private cd: ChangeDetectorRef) {
+  constructor(private scrollSrv: NzScrollService, @Inject(DOCUMENT) private doc: any, private cdr: ChangeDetectorRef) {
   }
 
   registerLink(link: NzAnchorLinkComponent): void {
@@ -125,15 +127,17 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.removeListen();
   }
 
   private registerScrollEvent(): void {
     this.removeListen();
-    this.scroll$ = fromEvent(this.getTarget(), 'scroll').pipe(throttleTime(50), distinctUntilChanged())
-    .subscribe(e => this.handleScroll());
-    // 由于页面刷新时滚动条位置的记忆
-    // 倒置在dom未渲染完成，导致计算不正确
+    this.scroll$ = fromEvent(this.getTarget(), 'scroll')
+      .pipe(throttleTime(50), distinctUntilChanged())
+      .subscribe(() => this.handleScroll());
+    // 浏览器在刷新时保持滚动位置，会倒置在dom未渲染完成时计算不正确，因此延迟重新计算
+    // 与之相对应可能会引起组件移除后依然触发 `handleScroll` 的 `detectChanges`
     setTimeout(() => this.handleScroll());
   }
 
@@ -155,7 +159,7 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   handleScroll(): void {
-    if (this.animating) {
+    if (this.destroyed || this.animating) {
       return;
     }
 
@@ -179,7 +183,7 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
     this.visible = !!sections.length;
     if (!this.visible) {
       this.clearActive();
-      this.cd.detectChanges();
+      this.cdr.detectChanges();
     } else {
       const maxSection = sections.reduce((prev, curr) => curr.top > prev.top ? curr : prev);
       this.handleActive(maxSection.comp);
@@ -187,17 +191,21 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   private clearActive(): void {
-    this.links.forEach(i => i.active = false);
+    this.links.forEach(i => {
+      i.active = false;
+      i.markForCheck();
+    });
   }
 
   private handleActive(comp: NzAnchorLinkComponent): void {
     this.clearActive();
 
     comp.active = true;
-    this.cd.detectChanges();
+    comp.markForCheck();
 
-    const linkNode = (comp.el.nativeElement as HTMLDivElement).querySelector('.ant-anchor-link-title') as HTMLElement;
+    const linkNode = (comp.elementRef.nativeElement as HTMLDivElement).querySelector('.ant-anchor-link-title') as HTMLElement;
     this.ink.nativeElement.style.top = `${linkNode.offsetTop + linkNode.clientHeight / 2 - 4.5}px`;
+    this.cdr.detectChanges();
 
     this.nzScroll.emit(comp);
   }

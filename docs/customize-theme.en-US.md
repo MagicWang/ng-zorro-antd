@@ -17,13 +17,9 @@ We are using [Less](http://lesscss.org/) as the development language for styling
 
 Run `ng add ng-zorro-antd --theme`，then modified the file `src/theme.less`.
 
-> Note: `ng add ng-zorro-antd --theme` will [downgrade](https://github.com/angular/angular-cli/issues/10430) the version of `less` to `2.7`.
-
 ### Without schematics
 
 Create a standalone less file named `theme.less` in `src` folder, and add the path of it to the list of `styles` in `angular.json` file.
-
-> Note: You have to [downgrade](https://github.com/angular/angular-cli/issues/10430) the version of `less` to `2.7`.
 
 ```json
 ...
@@ -47,4 +43,4 @@ Here is an example of `theme.less`
 ```
 
 
-All less vars can be checked [here](https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/scripts/site/_site/src/theme.less) is a sample of theme define file.
+All less vars can be checked [here](https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/scripts/site/_site/doc/theme.less) is a sample of theme define file.

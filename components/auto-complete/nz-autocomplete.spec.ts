@@ -163,6 +163,20 @@ describe('auto-complete', () => {
       .toBe(false);
     }));
 
+    it('should close the panel when the trigger blur', fakeAsync(() => {
+      dispatchFakeEvent(input, 'focusin');
+      fixture.detectChanges();
+      flush();
+
+      expect(fixture.componentInstance.trigger.panelOpen)
+      .toBe(true);
+
+      dispatchFakeEvent(input, 'blur');
+
+      expect(fixture.componentInstance.trigger.panelOpen)
+      .toBe(false);
+    }));
+
     it('should not close the panel when the user clicks this input', fakeAsync(() => {
       dispatchFakeEvent(input, 'focusin');
       fixture.detectChanges();
@@ -363,6 +377,19 @@ describe('auto-complete', () => {
       .toBe('Downing Street');
 
     }));
+
+    it('should overlayClassName & overlayStyle work', () => {
+      fixture.componentInstance.overlayClassName = 'testClass';
+      fixture.componentInstance.overlayStyle = { color: 'rgb(1, 2, 3)' };
+      fixture.detectChanges();
+
+      fixture.componentInstance.trigger.openPanel();
+      fixture.detectChanges();
+
+      const dropdown = overlayContainerElement.querySelector('.ant-select-dropdown') as HTMLElement;
+      expect(dropdown.classList.contains(`testClass`)).toBe(true);
+      expect(dropdown.style.color).toBe(`rgb(1, 2, 3)`);
+    });
 
   });
 
@@ -804,12 +831,10 @@ describe('auto-complete', () => {
 
   describe('Fallback positions', () => {
     let fixture;
-    let input: HTMLInputElement;
 
     beforeEach(() => {
       fixture = TestBed.createComponent(NzTestSimpleAutocompleteComponent);
       fixture.detectChanges();
-      input = fixture.debugElement.query(By.css('input')).nativeElement;
     });
 
     it('should use bottom positioning by default', fakeAsync(() => {
@@ -929,7 +954,7 @@ class NzTestSimpleAutocompleteComponent {
   <div>
       <input [(ngModel)]="inputValue"
              [nzAutocomplete]="auto">
-      <nz-autocomplete [nzWidth]="width" [nzDataSource]="options" [nzDefaultActiveFirstOption]="false" nzBackfill #auto>
+      <nz-autocomplete [nzWidth]="width" [nzOverlayClassName]="overlayClassName" [nzOverlayStyle]="overlayStyle" [nzDataSource]="options" [nzDefaultActiveFirstOption]="false" nzBackfill #auto>
       </nz-autocomplete>
   </div>
   `
@@ -937,6 +962,8 @@ class NzTestSimpleAutocompleteComponent {
 class NzTestAutocompletePropertyComponent {
   inputValue: string;
   width: number;
+  overlayClassName = '';
+  overlayStyle = {};
   options = ['Burns Bay Road', 'Downing Street', 'Wall Street'];
   @ViewChild(NzAutocompleteComponent) panel: NzAutocompleteComponent;
   @ViewChild(NzAutocompleteTriggerDirective) trigger: NzAutocompleteTriggerDirective;

@@ -1,18 +1,26 @@
 import {
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  Host,
   Input,
-  Output
+  Optional,
+  Output,
+  TemplateRef,
+  ViewEncapsulation
 } from '@angular/core';
-import { fadeAnimation } from '../core/animation/fade-animations';
-import { toBoolean } from '../core/util/convert';
+import { zoomBigMotion } from '../core/animation/zoom';
+import { NzNoAnimationDirective } from '../core/no-animation/nz-no-animation.directive';
+import { InputBoolean } from '../core/util/convert';
 import { NzToolTipComponent } from '../tooltip/nz-tooltip.component';
 
 @Component({
+  changeDetection    : ChangeDetectionStrategy.OnPush,
+  encapsulation      : ViewEncapsulation.None,
   selector           : 'nz-popconfirm',
   preserveWhitespaces: false,
-  animations         : [ fadeAnimation ],
+  animations         : [ zoomBigMotion ],
   templateUrl        : './nz-popconfirm.component.html',
   styles             : [ `
     .ant-popover {
@@ -21,24 +29,21 @@ import { NzToolTipComponent } from '../tooltip/nz-tooltip.component';
   ` ]
 })
 export class NzPopconfirmComponent extends NzToolTipComponent {
-  _condition = false;
   _prefix = 'ant-popover-placement';
   _trigger = 'click';
   _hasBackdrop = true;
-  @Output() nzOnCancel: EventEmitter<void> = new EventEmitter();
-  @Output() nzOnConfirm: EventEmitter<void> = new EventEmitter();
 
   @Input() nzOkText: string;
   @Input() nzOkType: string = 'primary';
   @Input() nzCancelText: string;
+  @Input() @InputBoolean() nzCondition = false;
+  @Input() nzIcon: string | TemplateRef<void>;
 
-  @Input()
-  set nzCondition(value: boolean) {
-    this._condition = toBoolean(value);
-  }
+  @Output() readonly nzOnCancel: EventEmitter<void> = new EventEmitter();
+  @Output() readonly nzOnConfirm: EventEmitter<void> = new EventEmitter();
 
-  get nzCondition(): boolean {
-    return this._condition;
+  constructor(cdr: ChangeDetectorRef, @Host() @Optional() public noAnimation?: NzNoAnimationDirective) {
+    super(cdr, noAnimation);
   }
 
   show(): void {
@@ -58,9 +63,4 @@ export class NzPopconfirmComponent extends NzToolTipComponent {
     this.nzOnConfirm.emit();
     this.nzVisible = false;
   }
-
-  constructor(cdr: ChangeDetectorRef) {
-    super(cdr);
-  }
-
 }

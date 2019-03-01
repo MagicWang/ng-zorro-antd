@@ -86,12 +86,10 @@ describe('radio', () => {
   });
   describe('single radio button', () => {
     let fixture;
-    let testComponent;
     let radio;
     beforeEach(() => {
       fixture = TestBed.createComponent(NzTestRadioButtonComponent);
       fixture.detectChanges();
-      testComponent = fixture.debugElement.componentInstance;
       radio = fixture.debugElement.query(By.directive(NzRadioButtonComponent));
     });
     it('should className correct', () => {
@@ -151,26 +149,28 @@ describe('radio', () => {
       expect(testComponent.value).toBe('A');
       expect(testComponent.modelChange).toHaveBeenCalledTimes(0);
     }));
-    it('should name work', () => {
+    it('should name work', fakeAsync(() => {
       testComponent.name = 'test';
       fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
       expect(radios.every(radio => radio.nativeElement.querySelector('input').name === 'test')).toBe(true);
-    });
+    }));
   });
   describe('radio group disabled', () => {
     let fixture;
     let testComponent;
     let radios;
-    let radioGroup;
     beforeEach(() => {
       fixture = TestBed.createComponent(NzTestRadioGroupDisabledComponent);
       fixture.detectChanges();
       testComponent = fixture.debugElement.componentInstance;
       radios = fixture.debugElement.queryAll(By.directive(NzRadioButtonComponent));
-      radioGroup = fixture.debugElement.query(By.directive(NzRadioGroupComponent));
     });
     it('should group disable work', fakeAsync(() => {
       testComponent.disabled = true;
+      fixture.detectChanges();
+      flush();
       fixture.detectChanges();
       expect(testComponent.value).toBe('A');
       radios[ 1 ].nativeElement.click();
@@ -272,9 +272,11 @@ describe('radio', () => {
       expect(testComponent.formGroup.get('radioGroup').value).toBe('A');
       testComponent.disable();
       fixture.detectChanges();
-      tick();
+      flush();
       fixture.detectChanges();
       radios[ 1 ].nativeElement.click();
+      fixture.detectChanges();
+      flush();
       fixture.detectChanges();
       expect(testComponent.formGroup.get('radioGroup').value).toBe('A');
     }));
@@ -314,10 +316,12 @@ export class NzTestRadioButtonComponent {
   selector: 'nz-test-radio-group',
   template: `
     <nz-radio-group [(ngModel)]="value" [nzName]="name" [nzDisabled]="disabled" (ngModelChange)="modelChange($event)" [nzSize]="size">
-      <label nz-radio-button nzValue="A">A</label>
-      <label nz-radio-button nzValue="B">B</label>
-      <label nz-radio-button nzValue="C">C</label>
-      <label nz-radio-button nzValue="D">D</label>
+      <ng-container [ngClass]>
+        <label nz-radio-button nzValue="A">A</label>
+        <label nz-radio-button nzValue="B">B</label>
+        <label nz-radio-button nzValue="C">C</label>
+        <label nz-radio-button nzValue="D">D</label>
+      </ng-container>
     </nz-radio-group>`
 })
 

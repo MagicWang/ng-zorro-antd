@@ -1,4 +1,13 @@
-import { Component, ContentChildren, Input, QueryList, TemplateRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ContentChildren,
+  ElementRef,
+  Input,
+  QueryList, Renderer2,
+  TemplateRef,
+  ViewEncapsulation
+} from '@angular/core';
 
 import { NzListItemMetaComponent } from './nz-list-item-meta.component';
 
@@ -6,29 +15,16 @@ import { NzListItemMetaComponent } from './nz-list-item-meta.component';
   selector           : 'nz-list-item',
   templateUrl        : './nz-list-item.component.html',
   preserveWhitespaces: false,
-  host               : {
-    '[class.ant-list-item]': 'true'
-  }
+  encapsulation      : ViewEncapsulation.None,
+  changeDetection    : ChangeDetectionStrategy.OnPush
 })
 export class NzListItemComponent {
+  @ContentChildren(NzListItemMetaComponent) metas !: QueryList<NzListItemMetaComponent>;
   @Input() nzActions: Array<TemplateRef<void>> = [];
-  @ContentChildren(NzListItemMetaComponent) metas: QueryList<NzListItemMetaComponent>;
-
-  isCon = false;
-  conStr = '';
-  conTpl: TemplateRef<void>;
-
-  @Input()
-  set nzContent(value: string | TemplateRef<void>) {
-    if (value instanceof TemplateRef) {
-      this.conStr = null;
-      this.conTpl = value;
-    } else {
-      this.conStr = value;
-    }
-
-    this.isCon = !!value;
-  }
-
+  @Input() nzContent: string | TemplateRef<void>;
   @Input() nzExtra: TemplateRef<void>;
+
+  constructor(public elementRef: ElementRef, private renderer: Renderer2) {
+    this.renderer.addClass(this.elementRef.nativeElement, 'ant-list-item');
+  }
 }

@@ -25,7 +25,7 @@ export interface UploadFile {
   thumbUrl?: string;
   response?: any;
   error?: any;
-  linkProps?: any;
+  linkProps?: { download: string };
   type: string;
 
   [ key: string ]: any;
@@ -42,6 +42,7 @@ export interface UploadChangeParam {
 export interface ShowUploadListInterface {
   showRemoveIcon?: boolean;
   showPreviewIcon?: boolean;
+  hidePreviewIconInNonImage?: boolean;
 }
 
 export interface ZipButtonOptions {
@@ -49,6 +50,7 @@ export interface ZipButtonOptions {
   accept?: string | string[];
   action?: string;
   directory?: boolean;
+  openFileDialogOnClick?: boolean;
   beforeUpload?: (file: UploadFile, fileList: UploadFile[]) => boolean | Observable<any>;
   customRequest?: (item: any) => Subscription;
   data?: {} | ((file: UploadFile) => {});
@@ -65,7 +67,7 @@ export interface ZipButtonOptions {
 
 export interface UploadFilter {
   name: string;
-  fn: (fileList: UploadFile[]) => UploadFile[];
+  fn: (fileList: UploadFile[]) => UploadFile[] | Observable<UploadFile[]>;
 }
 
 export interface UploadXHRArgs {

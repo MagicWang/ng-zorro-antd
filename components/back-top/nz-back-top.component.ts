@@ -1,44 +1,31 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  Inject,
   Input,
   OnDestroy,
   OnInit,
   Output,
-  TemplateRef
+  TemplateRef,
+  ViewEncapsulation
 } from '@angular/core';
-
-import {
-  animate,
-  style,
-  transition,
-  trigger
-} from '@angular/animations';
 
 import { fromEvent, Subscription } from 'rxjs';
 import { distinctUntilChanged, throttleTime } from 'rxjs/operators';
+import { fadeMotion } from '../core/animation/fade';
 
 import { NzScrollService } from '../core/scroll/nz-scroll.service';
 import { toNumber } from '../core/util/convert';
 
 @Component({
   selector           : 'nz-back-top',
-  animations         : [
-    trigger('enterLeave', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate(300, style({ opacity: 1 }))
-      ]),
-      transition(':leave', [
-        style({ opacity: 1 }),
-        animate(300, style({ opacity: 0 }))
-      ])
-    ])
-  ],
+  animations         : [ fadeMotion ],
   templateUrl        : './nz-back-top.component.html',
   changeDetection    : ChangeDetectionStrategy.OnPush,
+  encapsulation      : ViewEncapsulation.None,
   preserveWhitespaces: false
 })
 export class NzBackTopComponent implements OnInit, OnDestroy {
@@ -62,14 +49,15 @@ export class NzBackTopComponent implements OnInit, OnDestroy {
   }
 
   @Input()
-  set nzTarget(el: HTMLElement) {
-    this.target = el;
+  set nzTarget(el: string | HTMLElement) {
+    this.target = typeof el === 'string' ? this.doc.querySelector(el) : el;
     this.registerScrollEvent();
   }
 
-  @Output() nzClick: EventEmitter<boolean> = new EventEmitter();
+  @Output() readonly nzClick: EventEmitter<boolean> = new EventEmitter();
 
-  constructor(private scrollSrv: NzScrollService, private cd: ChangeDetectorRef) {
+  // tslint:disable-next-line:no-any
+  constructor(private scrollSrv: NzScrollService, @Inject(DOCUMENT) private doc: any, private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -92,7 +80,7 @@ export class NzBackTopComponent implements OnInit, OnDestroy {
       return;
     }
     this.visible = !this.visible;
-    this.cd.detectChanges();
+    this.cd.markForCheck();
   }
 
   private removeListen(): void {
@@ -105,7 +93,7 @@ export class NzBackTopComponent implements OnInit, OnDestroy {
     this.removeListen();
     this.handleScroll();
     this.scroll$ = fromEvent(this.getTarget(), 'scroll').pipe(throttleTime(50), distinctUntilChanged())
-    .subscribe(e => this.handleScroll());
+    .subscribe(() => this.handleScroll());
   }
 
   ngOnDestroy(): void {

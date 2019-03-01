@@ -1,12 +1,14 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ContentChild,
   ElementRef,
-  HostBinding,
   Input,
   OnDestroy,
-  OnInit,
-  TemplateRef
+  OnInit, Renderer2,
+  TemplateRef,
+  ViewEncapsulation
 } from '@angular/core';
 
 import { NzAnchorComponent } from './nz-anchor.component';
@@ -16,9 +18,15 @@ import { NzAnchorComponent } from './nz-anchor.component';
   preserveWhitespaces: false,
   templateUrl        : './nz-anchor-link.component.html',
   host               : {
-    '[class.ant-anchor-link]': 'true',
-    'style'                  : 'display:block'
-  }
+    '[class.ant-anchor-link-active]': 'active'
+  },
+  styles             : [ `
+    nz-link {
+      display: block;
+    }
+  ` ],
+  encapsulation      : ViewEncapsulation.None,
+  changeDetection    : ChangeDetectionStrategy.OnPush
 })
 export class NzAnchorLinkComponent implements OnInit, OnDestroy {
 
@@ -26,10 +34,12 @@ export class NzAnchorLinkComponent implements OnInit, OnDestroy {
 
   titleStr = '';
   titleTpl: TemplateRef<void>;
+  active: boolean = false;
 
   @Input()
   set nzTitle(value: string | TemplateRef<void>) {
     if (value instanceof TemplateRef) {
+      this.titleStr = null;
       this.titleTpl = value;
     } else {
       this.titleStr = value;
@@ -38,9 +48,8 @@ export class NzAnchorLinkComponent implements OnInit, OnDestroy {
 
   @ContentChild('nzTemplate') nzTemplate: TemplateRef<void>;
 
-  @HostBinding('class.ant-anchor-link-active') active: boolean = false;
-
-  constructor(public el: ElementRef, private anchorComp: NzAnchorComponent) {
+  constructor(public elementRef: ElementRef, private anchorComp: NzAnchorComponent, private cdr: ChangeDetectorRef, renderer: Renderer2) {
+    renderer.addClass(elementRef.nativeElement, 'ant-anchor-link');
   }
 
   ngOnInit(): void {
@@ -51,6 +60,10 @@ export class NzAnchorLinkComponent implements OnInit, OnDestroy {
     e.preventDefault();
     e.stopPropagation();
     this.anchorComp.handleScrollTo(this);
+  }
+
+  markForCheck(): void {
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {

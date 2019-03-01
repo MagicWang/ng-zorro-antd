@@ -1,15 +1,16 @@
-// tslint:disable:no-any
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
+  Inject,
   Input,
   OnDestroy,
   OnInit,
   Output,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 
 import { NzScrollService } from '../core/scroll/nz-scroll.service';
@@ -21,16 +22,55 @@ import { throttleByAnimationFrameDecorator } from '../core/util/throttleByAnimat
   selector       : 'nz-affix',
   templateUrl    : './nz-affix.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styles         : [
-    `:host {
+  styles         : [ `
+    nz-affix {
       display: block;
-    }`
-  ]
+    }
+  ` ],
+  encapsulation  : ViewEncapsulation.None
 })
 export class NzAffixComponent implements OnInit, OnDestroy {
 
-  private timeout: any;
-  private events = [
+  @Input()
+  set nzTarget(value: string | Element | Window) {
+    this.clearEventListeners();
+    this._target = typeof value === 'string' ? this.doc.querySelector(value) : value || window;
+    this.setTargetEventListeners();
+    this.updatePosition({} as Event);
+  }
+
+  @Input()
+  set nzOffsetTop(value: number) {
+    if (typeof value === 'undefined') {
+      return;
+    }
+    this._offsetTop = toNumber(value, null);
+    this.updatePosition({} as Event);
+  }
+
+  get nzOffsetTop(): number {
+    return this._offsetTop;
+  }
+
+  @Input()
+  set nzOffsetBottom(value: number) {
+    if (typeof value === 'undefined') {
+      return;
+    }
+    this._offsetBottom = toNumber(value, null);
+    this.updatePosition({} as Event);
+  }
+
+  @Output()
+  readonly nzChange: EventEmitter<boolean> = new EventEmitter();
+
+  // tslint:disable-next-line:no-any
+  constructor(_el: ElementRef, private scrollSrv: NzScrollService, @Inject(DOCUMENT) private doc: any) {
+    this.placeholderNode = _el.nativeElement;
+  }
+
+  private timeout: number;
+  private readonly events = [
     'resize',
     'scroll',
     'touchstart',
@@ -39,55 +79,55 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     'pageshow',
     'load'
   ];
+  @ViewChild('fixedEl') private fixedEl: ElementRef;
+  // tslint:disable-next-line:no-any
   private affixStyle: any;
+  // tslint:disable-next-line:no-any
   private placeholderStyle: any;
-
-  @ViewChild('wrap') private wrap: ElementRef;
+  private placeholderNode: HTMLElement;
 
   private _target: Element | Window = window;
 
-  @Input()
-  set nzTarget(value: Element | Window) {
-    this.clearEventListeners();
-    this._target = value || window;
-    this.setTargetEventListeners();
-    this.updatePosition({});
-  }
-
   private _offsetTop: number;
 
-  @Input()
-  set nzOffsetTop(value: number) {
-    if (typeof value === 'undefined') {
-      return;
-    }
-    this._offsetTop = toNumber(value, null);
-  }
-
-  get nzOffsetTop(): number {
-    return this._offsetTop;
-  }
-
   private _offsetBottom: number;
-
-  @Input()
-  set nzOffsetBottom(value: number) {
-    if (typeof value === 'undefined') {
-      return;
-    }
-    this._offsetBottom = toNumber(value, null);
-  }
-
-  @Output() nzChange: EventEmitter<boolean> = new EventEmitter();
-
-  constructor(private scrollSrv: NzScrollService, private _el: ElementRef, private cd: ChangeDetectorRef) {
-  }
 
   ngOnInit(): void {
     this.timeout = setTimeout(() => {
       this.setTargetEventListeners();
-      this.updatePosition({});
+      this.updatePosition({} as Event);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.clearEventListeners();
+    clearTimeout(this.timeout);
+    // tslint:disable-next-line:no-any
+    (this.updatePosition as any).cancel();
+  }
+
+  getOffset(element: Element, target: Element | Window | null): {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } {
+    const elemRect = element.getBoundingClientRect();
+    const targetRect = this.getTargetRect(target);
+
+    const scrollTop = this.scrollSrv.getScroll(target, true);
+    const scrollLeft = this.scrollSrv.getScroll(target, false);
+
+    const docElem = this.doc.body;
+    const clientTop = docElem.clientTop || 0;
+    const clientLeft = docElem.clientLeft || 0;
+
+    return {
+      top   : elemRect.top - targetRect.top + scrollTop - clientTop,
+      left  : elemRect.left - targetRect.left + scrollLeft - clientLeft,
+      width : elemRect.width,
+      height: elemRect.height
+    };
   }
 
   private setTargetEventListeners(): void {
@@ -103,40 +143,10 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.clearEventListeners();
-    clearTimeout(this.timeout);
-    (this.updatePosition as any).cancel();
-  }
-
   private getTargetRect(target: Element | Window | null): ClientRect {
     return target !== window ?
       (target as HTMLElement).getBoundingClientRect() :
       { top: 0, left: 0, bottom: 0 } as ClientRect;
-  }
-
-  getOffset(element: Element, target: Element | Window | null): {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  } {
-    const elemRect = element.getBoundingClientRect();
-    const targetRect = this.getTargetRect(target);
-
-    const scrollTop = this.scrollSrv.getScroll(target, true);
-    const scrollLeft = this.scrollSrv.getScroll(target, false);
-
-    const docElem = window.document.body;
-    const clientTop = docElem.clientTop || 0;
-    const clientLeft = docElem.clientLeft || 0;
-
-    return {
-      top   : elemRect.top - targetRect.top + scrollTop - clientTop,
-      left  : elemRect.left - targetRect.left + scrollLeft - clientLeft,
-      width : elemRect.width,
-      height: elemRect.height
-    };
   }
 
   private genStyle(affixStyle: {}): string {
@@ -149,7 +159,7 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     }).join(';');
   }
 
-  private setAffixStyle(e: any, affixStyle: {}): void {
+  private setAffixStyle(e: Event, affixStyle: {}): void {
     const originalAffixStyle = this.affixStyle;
     const isWindow = this._target === window;
     if (e.type === 'scroll' && originalAffixStyle && affixStyle && isWindow) {
@@ -160,7 +170,7 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     }
 
     const fixed = !!affixStyle;
-    const wrapEl = this.wrap.nativeElement as HTMLElement;
+    const wrapEl = this.fixedEl.nativeElement as HTMLElement;
     wrapEl.style.cssText = this.genStyle(affixStyle);
     this.affixStyle = affixStyle;
     const cls = 'ant-affix';
@@ -180,21 +190,34 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     if (shallowEqual(placeholderStyle, originalPlaceholderStyle)) {
       return;
     }
-    (this._el.nativeElement as HTMLElement).style.cssText = this.genStyle(placeholderStyle);
+    this.placeholderNode.style.cssText = this.genStyle(placeholderStyle);
     this.placeholderStyle = placeholderStyle;
   }
 
+  private syncPlaceholderStyle(e: Event): void {
+    if (!this.affixStyle) {
+      return ;
+    }
+    this.placeholderNode.style.cssText = '';
+    const widthObj = { width: this.placeholderNode.offsetWidth };
+    this.setAffixStyle(e, {
+      ...this.affixStyle,
+      ...widthObj
+    });
+    this.setPlaceholderStyle(widthObj);
+  }
+
   @throttleByAnimationFrameDecorator()
-  updatePosition(e: any): void {
+  updatePosition(e: Event): void {
     const targetNode = this._target;
     // Backwards support
     let offsetTop = this.nzOffsetTop;
     const scrollTop = this.scrollSrv.getScroll(targetNode, true);
-    const affixNode = this._el.nativeElement as HTMLElement;
-    const elemOffset = this.getOffset(affixNode, targetNode);
+    const elemOffset = this.getOffset(this.placeholderNode, targetNode);
+    const fixedNode = this.fixedEl.nativeElement as HTMLElement;
     const elemSize = {
-      width : affixNode.offsetWidth,
-      height: affixNode.offsetHeight
+      width : fixedNode.offsetWidth,
+      height: fixedNode.offsetHeight
     };
     const offsetMode = {
       top   : false,
@@ -211,7 +234,7 @@ export class NzAffixComponent implements OnInit, OnDestroy {
     const targetRect = this.getTargetRect(targetNode);
     const targetInnerHeight =
             (targetNode as Window).innerHeight || (targetNode as HTMLElement).clientHeight;
-    if (scrollTop > elemOffset.top - (offsetTop as number) && offsetMode.top) {
+    if (scrollTop >= elemOffset.top - (offsetTop as number) && offsetMode.top) {
       const width = elemOffset.width;
       const top = targetRect.top + (offsetTop as number);
       this.setAffixStyle(e, {
@@ -226,7 +249,7 @@ export class NzAffixComponent implements OnInit, OnDestroy {
         height: elemSize.height
       });
     } else if (
-      scrollTop < elemOffset.top + elemSize.height + (this._offsetBottom as number) - targetInnerHeight &&
+      scrollTop <= elemOffset.top + elemSize.height + (this._offsetBottom as number) - targetInnerHeight &&
       offsetMode.bottom
     ) {
       const targetBottomOffet = targetNode === window ? 0 : (window.innerHeight - targetRect.bottom);
@@ -242,13 +265,16 @@ export class NzAffixComponent implements OnInit, OnDestroy {
         height: elemOffset.height
       });
     } else {
-      if (e.type === 'resize' && this.affixStyle && this.affixStyle.position === 'fixed' && affixNode.offsetWidth) {
-        this.setAffixStyle(e, { ...this.affixStyle, width: affixNode.offsetWidth });
+      if (e.type === 'resize' && this.affixStyle && this.affixStyle.position === 'fixed' && this.placeholderNode.offsetWidth) {
+        this.setAffixStyle(e, { ...this.affixStyle, width: this.placeholderNode.offsetWidth });
       } else {
         this.setAffixStyle(e, null);
       }
       this.setPlaceholderStyle(null);
     }
-  }
 
+    if (e.type === 'resize') {
+      this.syncPlaceholderStyle(e);
+    }
+  }
 }

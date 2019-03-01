@@ -14,7 +14,9 @@ export class DrawerBuilderForService<R> {
 
   constructor(private overlay: Overlay, private options: NzDrawerOptions) {
     this.createDrawer();
-    this.updateOptions(options);
+    this.updateOptions(this.options);
+    // Prevent repeatedly open drawer when tap focus element.
+    this.drawerRef.instance.savePreviouslyFocusedElement();
     this.drawerRef.instance.nzOnViewInit
     .pipe(takeUntil(this.unsubscribe$))
     .subscribe(() => {
