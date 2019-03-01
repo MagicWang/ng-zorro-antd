@@ -511,12 +511,12 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   }
   private bindTriggerEvent(): void {
     if (this.nzDraggable && this.modalHeader && this.modalHeader.nativeElement) {
-      this.mousedownSubscription = fromEvent(this.modalHeader.nativeElement, 'mousedown').subscribe((evt: MouseEvent) => {
+      this.mousedownSubscription = fromEvent(this.modalHeader.nativeElement, 'mousedown').subscribe(evt => {
         this._ngZone.runOutsideAngular(() => {
-          this.onMouseDown(evt);
-          this.mousemoveSubscription = fromEvent(document, 'mousemove').subscribe((evt1: MouseEvent) => this.onMouseMove(evt1));
-          this.mouseupSubscription = fromEvent(document, 'mouseup').subscribe((evt2: MouseEvent)  => {
-            this.onMouseLeave(evt2);
+          this.onMouseDown(evt as MouseEvent);
+          this.mousemoveSubscription = fromEvent(document, 'mousemove').subscribe(evt1 => this.onMouseMove(evt1 as MouseEvent));
+          this.mouseupSubscription = fromEvent(document, 'mouseup').subscribe(evt2 => {
+            this.onMouseLeave(evt2 as MouseEvent);
             if (this.mousemoveSubscription) {
               this.mousemoveSubscription.unsubscribe();
               this.mousemoveSubscription = null;
