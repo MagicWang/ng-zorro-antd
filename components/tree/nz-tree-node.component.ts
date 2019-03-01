@@ -429,7 +429,7 @@ export class NzTreeNodeComponent implements OnInit, OnChanges, OnDestroy {
         this.nzTreeService.setSelectedNode(null);
         const dragEndEvent = this.nzTreeService.formatEvent('dragend', this.nzTreeNode, e);
         this.nzDragEnd.emit(dragEndEvent);
-      }
+      // }
     });
   }
 
