@@ -294,7 +294,7 @@ export class NzTreeComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   ngOnInit(): void {
     this.setClassMap();
     this.nzDefaultSubscription = this.nzDefaultSubject.subscribe((data: { type: string, keys: string[] }) => {
-      if (!data || !data.keys || data.keys.length === 0) {
+      if (!data || !data.keys) {
         return;
       }
       switch (data.type) {

@@ -2,8 +2,7 @@
   #dragElement
   role="treeitem"
   [style.display]="displayStyle"
-  [ngClass]="nzNodeClass"
-  *ngIf="!nzSearchValue || nzTreeNode.isParentMatched || nzTreeNode.isMatched">
+  [ngClass]="nzNodeClass">
   <ng-container *ngIf="nzShowExpand">
     <span
       [ngClass]="nzNodeSwitcherClass"

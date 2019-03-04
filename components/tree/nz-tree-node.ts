@@ -38,7 +38,6 @@ export class NzTreeNode {
   private _isSelected: boolean;
   private _isLoading: boolean;
   isMatched: boolean;
-  isParentMatched: boolean;
 
   private _service: NzTreeBaseService;
   component: NzTreeNodeComponent;
@@ -73,7 +72,6 @@ export class NzTreeNode {
     this._isSelected = (!option.disabled && option.selected) || false;
     this._isLoading = false;
     this.isMatched = false;
-    this.isParentMatched = false;
 
     /**
      * parent's checked status will affect children while initializing
