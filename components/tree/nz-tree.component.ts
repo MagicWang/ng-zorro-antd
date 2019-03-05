@@ -67,7 +67,8 @@ export class NzTreeComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   @Input() @InputBoolean() nzAsyncData = false;
   @Input() @InputBoolean() nzDraggable = false;
   @Input() @InputBoolean() nzExpandAll = false;
-  @Input() @InputBoolean() nzHideUnMatched = false;
+  @Input() @InputBoolean() nzHideUnMatched = true;
+  @Input() @InputBoolean() nzHideExpandNoChild = true;
   @Input() @InputBoolean() nzSelectMode = false;
   /**
    * @deprecated use

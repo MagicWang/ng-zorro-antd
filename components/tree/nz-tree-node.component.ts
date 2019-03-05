@@ -44,7 +44,8 @@ export class NzTreeNodeComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputBoolean() nzCheckable: boolean;
   @Input() @InputBoolean() nzAsyncData: boolean;
   @Input() @InputBoolean() nzCheckStrictly: boolean;
-  @Input() @InputBoolean() nzHideUnMatched = false;
+  @Input() @InputBoolean() nzHideUnMatched = true;
+  @Input() @InputBoolean() nzHideExpandNoChild = true;
   @Input() @InputBoolean() nzNoAnimation = false;
   @Input() @InputBoolean() nzSelectMode = false;
   @Input() @InputBoolean() nzShowIcon = false;
@@ -146,7 +147,7 @@ export class NzTreeNodeComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get isShowSwitchIcon(): boolean {
-    return !this.nzTreeNode.isLeaf && !this.nzShowLine;
+    return (this.nzHideExpandNoChild ? this.nzTreeNode.children && this.nzTreeNode.children.length > 0 : !this.nzTreeNode.isLeaf) && !this.nzShowLine ;
   }
 
   get isSwitcherOpen(): boolean {
