@@ -76,6 +76,7 @@ export class NzTreeComponent implements OnInit, OnChanges, OnDestroy, ControlVal
    */
   @Input() @InputBoolean() nzDefaultExpandAll = false;
   @Input() nzBeforeDrop: (confirm: NzFormatBeforeDropEvent) => Observable<boolean>;
+  @Input() @InputBoolean() nzDropOnSelf = true;
 
   @Input() @InputBoolean()
   set nzMultiple(value: boolean) {

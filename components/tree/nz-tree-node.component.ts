@@ -51,6 +51,7 @@ export class NzTreeNodeComponent implements OnInit, OnChanges, OnDestroy {
   @Input() @InputBoolean() nzShowIcon = false;
   @Input() nzTreeTemplate: TemplateRef<void>;
   @Input() nzBeforeDrop: (confirm: NzFormatBeforeDropEvent) => Observable<boolean>;
+  @Input() @InputBoolean() nzDropOnSelf = true;
 
   @Input()
   set nzDraggable(value: boolean) {
@@ -375,7 +376,9 @@ export class NzTreeNodeComponent implements OnInit, OnChanges, OnDestroy {
           this.nzTreeService.triggerEventChange$.next(dragEndEvent);
         });
       } else if (this.nzTreeNode) {
-        this.nzTreeService.dropAndApply(this.nzTreeNode, this.dragPos);
+        if (this.nzDropOnSelf) {
+          this.nzTreeService.dropAndApply(this.nzTreeNode, this.dragPos);
+        }
         this.nzTreeService.triggerEventChange$.next(dropEvent);
       }
     });
