@@ -3,6 +3,7 @@
   (mouseenter)="onEnter()"
   (mouseleave)="onLeave()">
   <div class="ant-message-notice-content">
+    <iframe class="ant-message-iframe" frameBorder="0" scrolling="no"></iframe>
     <div class="ant-message-custom-content" [ngClass]="'ant-message-' + nzMessage.type">
       <ng-container [ngSwitch]="nzMessage.type">
         <i *ngSwitchCase="'success'" nz-icon type="check-circle"></i>
