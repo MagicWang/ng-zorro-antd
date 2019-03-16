@@ -86,9 +86,9 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   private dragging: boolean;
   private lastPageX = 0;
   private lastPageY = 0;
-  private mousedownSubscription: Subscription;
-  private mousemoveSubscription: Subscription;
-  private mouseupSubscription: Subscription;
+  private mousedownSubscription: Subscription | null;
+  private mousemoveSubscription: Subscription | null;
+  private mouseupSubscription: Subscription | null;
 
   @Input() @Output() readonly nzOnOk: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
   @Input() @Output() readonly nzOnCancel: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
