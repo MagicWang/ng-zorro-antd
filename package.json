@@ -103,11 +103,5 @@
     "webpack-bundle-analyzer": "^3.0.2",
     "yaml-front-matter": "^4.0.0",
     "zone.js": "~0.8.26"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "node ./scripts/git/commit-msg.js -E HUSKY_GIT_PARAMS",
-      "pre-commit": "pretty-quick --staged"
-    }
   }
 }
