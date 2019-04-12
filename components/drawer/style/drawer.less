@@ -12,10 +12,8 @@
   z-index: @zindex-modal;
   width: 0%;
   height: 100%;
-
   > * {
-    transition: transform @animation-duration-slow @ease-base-in,
-      box-shadow @animation-duration-slow @ease-base-in;
+    transition: transform @animation-duration-slow @ease-base-in;
   }
 
   &-content-wrapper {
@@ -152,7 +150,7 @@
 
   &-header {
     position: relative;
-    padding: @drawer-header-padding;
+    padding: 16px 24px;
     color: @text-color;
     background: @component-background;
     border-bottom: @border-width-base @border-style-base @border-color-split;
@@ -165,7 +163,7 @@
   }
 
   &-body {
-    padding: @drawer-body-padding;
+    padding: 24px;
     font-size: @font-size-base;
     line-height: @line-height-base;
     word-wrap: break-word;

@@ -16,13 +16,10 @@
 
 .@{calendar-prefix-cls}-range-picker-separator {
   display: inline-block;
-  min-width: 10px;
+  width: 10px;
   height: 100%;
   color: @text-color-secondary;
-  white-space: nowrap;
-  text-align: center;
   vertical-align: top;
-  pointer-events: none;
 }
 
 .@{calendar-prefix-cls}-range {
@@ -64,24 +61,20 @@
   &-middle {
     position: absolute;
     left: 50%;
-    z-index: 1;
+    width: 20px;
     height: @input-box-height;
-    margin: 1px 0 0 0;
-    padding: 0 200px 0 0;
+    margin-left: -132px;
     color: @text-color-secondary;
     line-height: @input-box-height;
     text-align: center;
-    transform: translateX(-50%);
-    pointer-events: none;
   }
 
   &-right .@{calendar-prefix-cls}-date-input-wrap {
-    margin-left: -90px;
+    margin-left: -118px;
   }
 
   &.@{calendar-prefix-cls}-time &-middle {
-    padding: 0 10px 0 0;
-    transform: translateX(-50%);
+    margin-left: -12px;
   }
 
   &.@{calendar-prefix-cls}-time &-right .@{calendar-prefix-cls}-date-input-wrap {

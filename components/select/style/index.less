@@ -182,8 +182,7 @@
           line-height: @input-height-lg - 8px;
         }
       }
-      .@{select-prefix-cls}-selection__clear,
-      .@{select-prefix-cls}-arrow {
+      .@{select-prefix-cls}-selection__clear {
         top: @input-height-lg / 2;
       }
     }
@@ -205,8 +204,7 @@
           line-height: @input-height-sm - 10px;
         }
       }
-      .@{select-prefix-cls}-selection__clear,
-      .@{select-prefix-cls}-arrow {
+      .@{select-prefix-cls}-selection__clear {
         top: @input-height-sm / 2;
       }
     }
@@ -366,8 +364,7 @@
       }
     }
 
-    .@{select-prefix-cls}-selection__clear,
-    .@{select-prefix-cls}-arrow {
+    .@{select-prefix-cls}-selection__clear {
       top: @input-height-base / 2;
     }
   }
@@ -376,8 +373,7 @@
     padding-right: 16px;
   }
 
-  &-allow-clear &-selection--multiple &-selection__rendered,
-  &-show-arrow &-selection--multiple &-selection__rendered {
+  &-allow-clear &-selection--multiple &-selection__rendered {
     margin-right: 20px; // In case that clear button will overlap content
   }
 
@@ -414,8 +410,7 @@
       transition: all 0.3s @ease-in-out, height 0s;
     }
   }
-  &-combobox&-allow-clear &-selection:hover &-selection__rendered,
-  &-combobox&-show-arrow &-selection:hover &-selection__rendered {
+  &-combobox&-allow-clear &-selection:hover &-selection__rendered {
     margin-right: 20px; // In case that clear button will overlap content
   }
 }
@@ -530,7 +525,7 @@
         &,
         &:hover {
           color: @text-color;
-          font-weight: @select-item-selected-font-weight;
+          font-weight: 600;
           background-color: @background-color-light;
         }
       }
@@ -561,7 +556,7 @@
         font-size: 12px;
         text-shadow: 0 0.1px 0, 0.1px 0 0, 0 -0.1px 0, -0.1px 0;
         transform: translateY(-50%);
-        transition: all 0.2s;
+        transition: all .2s;
       }
 
       &:hover .@{select-prefix-cls}-selected-icon {
@@ -578,12 +573,6 @@
         color: @primary-color;
       }
     }
-  }
-
-  // Patch for popup adjust
-  // https://github.com/ant-design/ant-design/issues/14422
-  &--empty&--multiple &-menu-item {
-    padding-right: @control-padding-horizontal;
   }
 
   &-container-open,
