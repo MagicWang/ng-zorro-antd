@@ -55,9 +55,10 @@ export function NzTreeServiceFactory(
 })
 export class NzTreeComponent implements OnInit, OnDestroy, ControlValueAccessor, OnChanges {
   @Input() @InputBoolean() nzShowIcon = false;
-  @Input() @InputBoolean() nzShowLine = false;
-  @Input() @InputBoolean() nzCheckable = false;
   @Input() @InputBoolean() nzShowExpand = true;
+  @Input() @InputBoolean() nzShowLine = false;
+  @Input() nzExpandedIcon: TemplateRef<{ $implicit: NzTreeNode }>;
+  @Input() @InputBoolean() nzCheckable = false;
   @Input() @InputBoolean() nzAsyncData = false;
   @Input() @InputBoolean() nzDraggable = false;
   @Input() @InputBoolean() nzExpandAll = false;
@@ -65,6 +66,7 @@ export class NzTreeComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() @InputBoolean() nzHideExpandNoChild = true;
   @Input() @InputBoolean() nzSelectMode = false;
   @Input() @InputBoolean() nzCheckStrictly = false;
+  @Input() @InputBoolean() nzBlockNode = false;
   /**
    * @deprecated use
    * nzExpandAll instead
@@ -230,6 +232,7 @@ export class NzTreeComponent implements OnInit, OnDestroy, ControlValueAccessor,
       [this.prefixCls]: true,
       [this.prefixCls + '-show-line']: this.nzShowLine,
       [`${this.prefixCls}-icon-hide`]: !this.nzShowIcon,
+      [`${this.prefixCls}-block-node`]: this.nzBlockNode,
       ['draggable-tree']: this.nzDraggable,
       ['ant-select-tree']: this.nzSelectMode
     };
