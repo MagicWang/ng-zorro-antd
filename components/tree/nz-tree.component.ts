@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Alibaba.com All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+
 import {
   forwardRef,
   ChangeDetectionStrategy,
@@ -19,24 +27,31 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { NzNoAnimationDirective } from '../core/no-animation/nz-no-animation.directive';
-import { isNotNil } from '../core/util/check';
-import { toBoolean, InputBoolean } from '../core/util/convert';
-import { NzTreeSelectService } from '../tree-select/nz-tree-select.service';
-import { NzFormatBeforeDropEvent, NzFormatEmitEvent } from '../tree/interface';
-import { NzTreeBaseService } from './nz-tree-base.service';
-import { NzTreeNode } from './nz-tree-node';
+
+import {
+  isNotNil,
+  toBoolean,
+  InputBoolean,
+  NzFormatBeforeDropEvent,
+  NzFormatEmitEvent,
+  NzNoAnimationDirective,
+  NzTreeBaseService,
+  NzTreeHigherOrderServiceToken,
+  NzTreeNode
+} from 'ng-zorro-antd/core';
+
 import { NzTreeService } from './nz-tree.service';
 
 export function NzTreeServiceFactory(
-  treeSelectService: NzTreeSelectService,
+  higherOrderService: NzTreeBaseService,
   treeService: NzTreeService
 ): NzTreeBaseService {
-  return treeSelectService ? treeSelectService : treeService;
+  return higherOrderService ? higherOrderService : treeService;
 }
 
 @Component({
   selector: 'nz-tree',
+  exportAs: 'nzTree',
   templateUrl: './nz-tree.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -44,7 +59,7 @@ export function NzTreeServiceFactory(
     {
       provide: NzTreeBaseService,
       useFactory: NzTreeServiceFactory,
-      deps: [[new SkipSelf(), new Optional(), NzTreeSelectService], NzTreeService]
+      deps: [[new SkipSelf(), new Optional(), NzTreeHigherOrderServiceToken], NzTreeService]
     },
     {
       provide: NG_VALUE_ACCESSOR,
@@ -67,6 +82,7 @@ export class NzTreeComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() @InputBoolean() nzSelectMode = false;
   @Input() @InputBoolean() nzCheckStrictly = false;
   @Input() @InputBoolean() nzBlockNode = false;
+
   /**
    * @deprecated use
    * nzExpandAll instead

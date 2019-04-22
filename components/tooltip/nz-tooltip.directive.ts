@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Alibaba.com All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+
 import {
   AfterViewInit,
   ComponentFactory,
@@ -21,13 +29,13 @@ import {
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 
-import { NzNoAnimationDirective } from '../core/no-animation/nz-no-animation.directive';
-import { isNotNil } from '../core/util/check';
+import { isNotNil, NzNoAnimationDirective } from 'ng-zorro-antd/core';
 
 import { NzToolTipComponent } from './nz-tooltip.component';
 
 @Directive({
   selector: '[nz-tooltip]',
+  exportAs: 'nzTooltip',
   host: {
     '[class.ant-tooltip-open]': 'isTooltipOpen'
   }

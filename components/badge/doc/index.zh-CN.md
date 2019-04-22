@@ -1,7 +1,7 @@
 ---
 category: Components
 subtitle: 徽标数
-type: Data Display
+type: 数据展示
 title: Badge
 ---
 
@@ -21,6 +21,14 @@ title: Badge
 
 ```html
 <nz-badge [nzCount]="5"></nz-badge>
+```
+
+### 单独引入此组件
+
+想要了解更多关于单独引入组件的内容，可以在[快速上手](/docs/getting-started/zh#单独引入某个组件)页面进行查看。
+
+```ts
+import { NzBadgeModule } from 'ng-zorro-antd';
 ```
 
 ### nz-badge

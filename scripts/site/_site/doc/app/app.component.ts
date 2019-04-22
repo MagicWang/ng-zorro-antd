@@ -13,7 +13,6 @@ declare const docsearch: any;
 interface DocPageMeta {
   path: string;
   label: string;
-  language: string;
   order?: number;
   zh: string;
 }
@@ -40,7 +39,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   language = 'zh';
   oldVersionList = [ '0.5.x', '0.6.x', '0.7.x', '1.8.x' ];
-  currentVersion = '7.2.0';
+  currentVersion = '7.3.0';
 
   @ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>;
 

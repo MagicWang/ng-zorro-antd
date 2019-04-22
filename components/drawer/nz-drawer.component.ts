@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Alibaba.com All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+
 import { DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
@@ -27,7 +35,7 @@ import { CdkPortalOutlet, ComponentPortal, PortalInjector, TemplatePortal } from
 
 import { Observable, Subject } from 'rxjs';
 
-import { toCssPixel, InputBoolean } from '../core/util/convert';
+import { toCssPixel, InputBoolean } from 'ng-zorro-antd/core';
 import { NzDrawerOptions, NzDrawerPlacement } from './nz-drawer-options';
 import { NzDrawerRef } from './nz-drawer-ref';
 
@@ -35,6 +43,7 @@ export const DRAWER_ANIMATE_DURATION = 300;
 
 @Component({
   selector: 'nz-drawer',
+  exportAs: 'nzDrawer',
   templateUrl: './nz-drawer.component.html',
   preserveWhitespaces: false,
   changeDetection: ChangeDetectionStrategy.OnPush

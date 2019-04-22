@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Alibaba.com All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -16,6 +24,8 @@ import { ActivatedRoute, Params, PRIMARY_OUTLET, Router } from '@angular/router'
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+import { InputBoolean } from 'ng-zorro-antd/core';
+
 export const NZ_ROUTE_DATA_BREADCRUMB = 'breadcrumb';
 
 export interface BreadcrumbOption {
@@ -28,6 +38,7 @@ export interface BreadcrumbOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   selector: 'nz-breadcrumb',
+  exportAs: 'nzBreadcrumb',
   preserveWhitespaces: false,
   templateUrl: './nz-breadcrumb.component.html',
   styles: [
@@ -39,7 +50,7 @@ export interface BreadcrumbOption {
   ]
 })
 export class NzBreadCrumbComponent implements OnInit, OnDestroy {
-  @Input() nzAutoGenerate = false;
+  @Input() @InputBoolean() nzAutoGenerate = false;
   @Input() nzSeparator: string | TemplateRef<void> = '/';
 
   breadcrumbs: BreadcrumbOption[] | undefined = [];

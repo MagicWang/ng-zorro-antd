@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Alibaba.com All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+
 import {
   AfterViewInit,
   Directive,
@@ -15,8 +23,8 @@ import { MediaMatcher } from '@angular/cdk/layout';
 import { Platform } from '@angular/cdk/platform';
 import { fromEvent, Subject } from 'rxjs';
 import { auditTime, takeUntil } from 'rxjs/operators';
-import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
-import { IndexableObject } from '../core/types/indexable';
+
+import { IndexableObject, NzUpdateHostClassService } from 'ng-zorro-antd/core';
 
 export type NzJustify = 'start' | 'end' | 'center' | 'space-around' | 'space-between';
 export type NzAlign = 'top' | 'middle' | 'bottom';
@@ -44,6 +52,7 @@ const responsiveMap: BreakpointMap = {
 
 @Directive({
   selector: '[nz-row],nz-row',
+  exportAs: 'nzRow',
   providers: [NzUpdateHostClassService]
 })
 export class NzRowDirective implements OnInit, OnChanges, AfterViewInit, OnDestroy {
