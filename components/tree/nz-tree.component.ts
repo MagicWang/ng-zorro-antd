@@ -84,6 +84,8 @@ export class NzTreeComponent extends NzTreeBase implements OnInit, OnDestroy, Co
   @Input() @InputBoolean() nzCheckStrictly = false;
   @Input() @InputBoolean() nzBlockNode = false;
 
+  @Input() @ContentChild('nzTreeTemplate') nzTreeTemplate: TemplateRef<{ $implicit: NzTreeNode }>;
+
   /**
    * @deprecated use
    * nzExpandAll instead
@@ -196,8 +198,7 @@ export class NzTreeComponent extends NzTreeBase implements OnInit, OnDestroy, Co
   @Output() readonly nzOnDragLeave: EventEmitter<NzFormatEmitEvent> = new EventEmitter();
   @Output() readonly nzOnDrop: EventEmitter<NzFormatEmitEvent> = new EventEmitter();
   @Output() readonly nzOnDragEnd: EventEmitter<NzFormatEmitEvent> = new EventEmitter();
-  // tslint:disable-next-line:no-any
-  @ContentChild('nzTreeTemplate') nzTreeTemplate: TemplateRef<any>;
+
   _searchValue: string;
   _nzMultiple: boolean = false;
   nzDefaultSubject = new ReplaySubject<{ type: string; keys: string[] }>(6);
