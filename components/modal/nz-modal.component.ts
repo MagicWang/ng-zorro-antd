@@ -107,10 +107,10 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R>
   @Output() readonly nzAfterClose = new EventEmitter<R>(); // Trigger when modal leave-animation over
   @Output() readonly nzVisibleChange = new EventEmitter<boolean>();
 
-  @ViewChild('modalContainer') modalContainer: ElementRef;
-  @ViewChild('bodyContainer', { read: ViewContainerRef }) bodyContainer: ViewContainerRef;
-  @ViewChild('autoFocusButtonOk', { read: ElementRef }) autoFocusButtonOk: ElementRef; // Only aim to focus the ok button that needs to be auto focused
-  @ViewChild('modalHeader') modalHeader: ElementRef;
+  @ViewChild('modalContainer', { static: true }) modalContainer: ElementRef;
+  @ViewChild('bodyContainer', { static: false, read: ViewContainerRef }) bodyContainer: ViewContainerRef;
+  @ViewChild('autoFocusButtonOk', { static: false, read: ElementRef }) autoFocusButtonOk: ElementRef; // Only aim to focus the ok button that needs to be auto focused
+  @ViewChild('modalHeader', { static: true }) modalHeader: ElementRef;
 
   get afterOpen(): Observable<void> {
     // Observable alias for nzAfterOpen
