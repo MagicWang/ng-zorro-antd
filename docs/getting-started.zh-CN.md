@@ -47,6 +47,9 @@ $ ng new PROJECT-NAME
 $ ng add ng-zorro-antd
 ```
 
+<img style="display: block; border-radius: 4px; box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.2);" src="https://img.alicdn.com/tfs/TB19fFHdkxz61VjSZFtXXaDSVXa-680-243.svg">
+
+
 开发者可以通过增加参数来完成个性化的初始化配置，例如国际化或者自定义主题等，详细可以参考 [脚手架](/docs/schematics/zh) 部分。
 
 ### 4. 开发调试
@@ -147,7 +150,7 @@ export class AppModule { }
 
 ## 单独引入某个组件
 
-从 7.3.0 版本起，你可以引入子 module 和单独打包的 CSS/less 文件来单独使用某个组件。
+你可以通过引入子 module 和单独打包的 CSS/less 文件来单独使用某个组件。
 
 例如，你只想使用 Button 组件，那么你就可以引入 `NzButtonModule` 而不是 `NgZorroAntdModule`，在 `style.css` 里导入组件对应的样式文件而不是全部的样式文件。
 
